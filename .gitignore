@@ -1,0 +1,25 @@
+
+# Credenciais e variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Ambiente virtual Python
+.venv/
+venv/
+env/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Dados originais e resultados gerados
+dados/brutos/
+dados/processados/
+
+# Arquivos temporários
+*.log
+.DS_Store
