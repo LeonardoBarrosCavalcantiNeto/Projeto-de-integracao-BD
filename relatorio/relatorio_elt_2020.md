@@ -105,7 +105,7 @@ Não foi presumida uma data correta para substituí-la.
 
 ## Reprodução e evidências
 
-Executar notebooks/elt/elt_2020.ipynb no Colab, em ordem,
+Executar notebooks/ELT/elt_2020.ipynb no Colab, em ordem,
 enviando o ZIP com os 12 CSVs originais de 2020.
 
 O SQL separado está em sql/transformacoes/elt_2020.sql
