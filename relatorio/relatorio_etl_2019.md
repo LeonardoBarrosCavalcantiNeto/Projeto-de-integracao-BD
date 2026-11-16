@@ -1,132 +1,263 @@
-# Relatório do processo ETL — VRA/ANAC 2019
+# Relatório técnico — ETL VRA/ANAC 2019
 
-**Status deste documento:** versão revisada do processo ETL. A execução definitiva no PostgreSQL deve ser realizada no ambiente do projeto; os números finais serão registrados em `dados/processados/2019/etl_resumo.json`.
+**Contrato de referência:** Contrato Único de Dados e Tratamento VRA/ANAC, versão 1.1, atualizado em 11/11/2026  
+**Pipeline:** ETL 2019  
+**Situação desta entrega:** código e notebook corrigidos; teste sintético aprovado; execução com os 12 CSVs reais e carga no PostgreSQL ainda pendentes.
 
-## 1. Escopo e objetivo
+---
 
-Este artefato implementa a parte ETL referente exclusivamente ao ano de 2019, a partir dos 12 arquivos CSV mensais do conjunto Voo Regular Ativo (VRA), disponibilizado pela Agência Nacional de Aviação Civil (ANAC). O objetivo é transformar os dados para um formato consistente, validar os registros, construir um Data Warehouse em esquema estrela e carregar o resultado no PostgreSQL.
+## 1. Objetivo e escopo
 
-O projeto da disciplina prevê a integração de três períodos (2019, 2020 e 2021) e a comparação entre ETL e ELT. Portanto, este relatório não apresenta a etapa de 2019 como integração final dos três anos nem como implementação de ELT.
+Este ETL processa exclusivamente os arquivos mensais VRA/ANAC de 2019. A implementação foi ajustada para seguir o contrato v1.1 do grupo, mantendo a equivalência das regras de qualidade com o pipeline ELT: preservação da origem, exclusão analítica somente das ocorrências excedentes de duplicatas exatas, rejeição dos registros sem os atributos obrigatórios, auditoria e modelo dimensional.
 
-## 2. Fontes e ingestão
+O fluxo é:
 
-O pipeline espera os arquivos `VRA_2019_01.csv` a `VRA_2019_12.csv`, todos na pasta de entrada. O formato esperado é CSV com separador `;`, codificação UTF-8 e os 20 campos originais definidos no contrato de dados.
+1. Conferir os 12 CSVs e seus 20 cabeçalhos originais.
+2. Copiar os arquivos originais sem modificá-los e carregar seus valores como texto.
+3. Identificar duplicatas exatas comparando os 20 campos originais, antes de `TRIM`, `UPPER` ou conversões.
+4. Escolher como representante a primeira ocorrência na ordem estável de nome do arquivo e número do registro.
+5. Padronizar e validar os dados. Apenas os representantes válidos seguem para a camada analítica.
+6. Produzir auditorias, métricas, arquivos de saída e as sete dimensões com a Fato.
+7. Opcionalmente, carregar a camada bruta, as saídas de tratamento, as auditorias e o esquema estrela no PostgreSQL.
 
-As colunas são lidas inicialmente como texto. Essa decisão preserva códigos e identificadores, especialmente `Número Voo`, que permanece como `TEXT` para conservar zeros à esquerda. Os arquivos de origem não são alterados.
+O processo não implementa ELT e não consolida 2020 ou 2021.
 
-A primeira exploração do conjunto registrou 983.414 linhas nos 12 arquivos. Essa contagem é uma referência da inspeção anterior; a execução atual registra novamente a quantidade efetivamente lida no arquivo `etl_resumo.json`.
+## 2. Correções aplicadas em relação à implementação anterior
 
-## 3. Transformações aplicadas
+| Ponto | Implementação anterior | Implementação corrigida |
+|---|---|---|
+| Deduplicação | Depois da padronização, comparando valores canônicos | Antes da padronização, comparando os 20 valores brutos originais |
+| Escolha do representante | Primeira linha do conjunto já padronizado | Primeira ocorrência por arquivo ordenado e `linha_origem` |
+| Auditoria de duplicatas | Exportava ocorrências excedentes, mas sem reproduzir integralmente a regra v1.1 | Exporta os 20 campos brutos, ano, arquivo, linha, grupo e referência à ocorrência preservada |
+| Possíveis duplicatas após limpeza | Não eram apresentadas separadamente | São sinalizadas em `vra_possiveis_duplicatas_padronizacao.csv.gz`, sem exclusão automática |
+| Campos obrigatórios | Incluía `numero_voo`, `tipo_linha`, `situacao_voo` e `referencia` | Usa somente companhia ICAO, aeroporto de origem, aeroporto de destino, partida prevista e chegada prevista |
+| Datas opcionais | Podiam ser tratadas como rejeição | Horários reais inválidos e `referencia` inválida viram anomalias; não rejeitam a linha por si só |
+| Número de assentos | Aceitava números negativos | Aceita apenas inteiro não negativo; valor inválido vira `NULL` e anomalia |
+| Fato | Armazenava flag de duplicata | Não armazena flags de duplicata; essas informações ficam na auditoria |
+| Métricas de horário | Calculava diferenças e atrasos | Mantém as medidas e acrescenta as duas flags de horário atípico previstas no contrato |
+| Preservação bruta | Staging já continha dados normalizados | Copia os CSVs byte a byte para `vra_bruta/` e também oferece a tabela `vra_bruta` no PostgreSQL |
+| Conciliação | Não garantia claramente a equação atualizada | Confere `brutas = excedentes excluídas + rejeições remanescentes + Fato` |
 
-1. **Mapeamento canônico:** os 20 campos originais são renomeados para os nomes definidos no contrato, como `companhia_icao`, `numero_voo`, `partida_prevista` e `referencia`.
-2. **Padronização textual:** remoção de espaços externos, conversão de texto vazio em `NULL`, códigos ICAO em maiúsculas e categorias controladas em maiúsculas.
-3. **Número do voo:** o campo `numero_voo` é mantido como texto; não é convertido para inteiro.
-4. **Datas e horários:** os quatro timestamps são interpretados no formato `DD/MM/AAAA HH:MM`, e `referencia` no formato `AAAA-MM-DD`. Valores inválidos são enviados para rejeições com o motivo correspondente.
-5. **Número de assentos:** conversão para inteiro anulável. Valores não numéricos ou fracionários são rejeitados; ausências permanecem nulas.
-6. **Atrasos e antecipações:** `diferenca_partida_min` e `diferenca_chegada_min` são calculadas como horário real menos previsto, em minutos e com sinal. As medidas `atraso_*_min` são limitadas inferiormente a zero. Quando o horário real não existe, as medidas permanecem `NULL`.
-7. **Fuso horário:** não é aplicada conversão de fuso, pois a convenção temporal precisa ser confirmada na documentação da fonte.
-8. **Situação do voo:** `REALIZADO`, `CANCELADO` e `NÃO INFORMADO` permanecem categorias distintas. Cancelamentos não são excluídos; ausência de horário real não é tratada como prova de cancelamento.
-9. **Proveniência:** são preservados `ano_origem`, `arquivo_origem`, `linha_origem`, `data_carga` e `pipeline` nas camadas de auditoria/staging. A fato mantém ano, arquivo e linha de origem.
+## 3. Entrada e preservação dos dados
 
-## 4. Deduplicação e rejeições
+O script exige exatamente estes arquivos:
 
-### 4.1 Regra de deduplicação adotada
+`VRA_2019_01.csv` até `VRA_2019_12.csv`.
 
-A regra foi alterada em relação à primeira versão do pipeline. Agora, a deduplicação é executada **depois da padronização**, comparando os 20 atributos canônicos em conjunto e considerando os 12 arquivos mensais como uma única entrada.
+A leitura usa `sep=';'`, `encoding='utf-8-sig'`, `dtype=str`, `keep_default_na=False` e `na_filter=False`. O cabeçalho é comparado com os 20 nomes originais e na ordem esperada. A leitura não converte os campos de origem para números ou datas.
 
-Quando todas as 20 colunas padronizadas coincidem, a primeira ocorrência (pela ordem dos arquivos mensais e pela ordem física da linha) é mantida e as ocorrências excedentes são removidas da carga da fato. A trilha dos registros removidos é exportada em `duplicatas_removidas.csv.gz`. A staging mantém todas as linhas e identifica o status `DUPLICATA_REMOVIDA`, preservando arquivo e linha de origem.
+São adicionados os metadados:
 
-Essa regra não usa a combinação companhia + número do voo + partida prevista como chave única de negócio. A decisão é baseada na igualdade dos 20 atributos do contrato após normalização.
+- `ano_origem`: 2019;
+- `arquivo_origem`: nome do CSV;
+- `linha_origem`: sequência de registros do arquivo, iniciando em 2 porque o cabeçalho é a linha 1;
+- `data_carga`, `pipeline` e `versao_contrato`: rastreabilidade da execução.
 
-**Atenção ao contrato do grupo:** a versão 0.1 do contrato de dados registrava que duplicatas não deveriam ser removidas automaticamente. Como a decisão do grupo foi alterada, o contrato compartilhado precisa ser atualizado para a versão seguinte, registrando esta regra e sua justificativa.
+Os 12 arquivos originais são copiados sem regravação para `dados/processados/2019/vra_bruta/`. Um manifesto registra tamanho e SHA-256, permitindo verificar a integridade da cópia. Com a carga PostgreSQL habilitada, a tabela `dw_etl.vra_bruta` contém os 20 campos originais como `TEXT`, além dos metadados.
 
-### 4.2 Registros rejeitados
+## 4. Mapeamento e padronização
 
-Registros com campos obrigatórios ausentes, datas inválidas, datas previstas ausentes ou número de assentos inválido são enviados para `rejeicoes.csv.gz`. O arquivo inclui os identificadores de proveniência e os motivos de rejeição. Registros rejeitados não entram na tabela fato.
+Os 20 nomes tratados são os definidos na seção 3 do contrato:
 
-## 5. Modelagem dimensional
+| Coluna original | Nome tratado | Tipo tratado |
+|---|---|---|
+| Sigla ICAO Empresa Aérea | `companhia_icao` | TEXT |
+| Empresa Aérea | `companhia_nome` | TEXT |
+| Número Voo | `numero_voo` | TEXT |
+| Código DI | `codigo_di` | TEXT |
+| Código Tipo Linha | `tipo_linha` | TEXT |
+| Modelo Equipamento | `modelo_equipamento` | TEXT |
+| Número de Assentos | `numero_assentos` | INTEGER NULL |
+| Sigla ICAO Aeroporto Origem | `aeroporto_origem` | TEXT |
+| Descrição Aeroporto Origem | `descricao_origem` | TEXT |
+| Partida Prevista | `partida_prevista` | TIMESTAMP NULL na camada tratada; obrigatória na Fato |
+| Partida Real | `partida_real` | TIMESTAMP NULL |
+| Sigla ICAO Aeroporto Destino | `aeroporto_destino` | TEXT |
+| Descrição Aeroporto Destino | `descricao_destino` | TEXT |
+| Chegada Prevista | `chegada_prevista` | TIMESTAMP NULL na camada tratada; obrigatória na Fato |
+| Chegada Real | `chegada_real` | TIMESTAMP NULL |
+| Situação Voo | `situacao_voo` | TEXT |
+| Justificativa | `justificativa` | TEXT NULL |
+| Referência | `referencia` | DATE NULL |
+| Situação Partida | `situacao_partida` | TEXT NULL |
+| Situação Chegada | `situacao_chegada` | TEXT NULL |
 
-O grão de `fato_voo` é uma ocorrência de voo da fonte que passou pelas regras de validação e deduplicação. `id_voo` é uma chave técnica gerada pelo ETL; não é um identificador original da ANAC.
+Regras aplicadas:
 
-A carga cria as seguintes dimensões:
+- Códigos ICAO, `codigo_di`, `tipo_linha`, `modelo_equipamento` e campos de situação: remover espaços externos e converter para maiúsculas.
+- Nome de companhia, descrições de aeroportos e justificativa: remover espaços externos, preservando grafia e capitalização.
+- Demais textos: remover espaços externos e preservar o conteúdo; `numero_voo` continua texto, mantendo zeros à esquerda.
+- Texto vazio ou contendo apenas espaços: `NULL` na camada tratada.
+- Não remover acentos, completar códigos, inventar descrições ou preencher horários ausentes.
+- `numero_assentos`: aceitar somente inteiro não negativo; valor preenchido inválido vira `NULL` e é registrado como anomalia, sem rejeição por esse motivo.
 
-- `dim_tempo`: data, ano, trimestre, mês, dia e dia da semana. É referenciada pelos papéis de partida prevista e chegada prevista.
-- `dim_companhia_aerea`: companhia identificada pelo código ICAO.
-- `dim_aeroporto`: aeroporto identificado pelo código ICAO, compartilhado entre origem e destino.
-- `dim_situacao_voo`: situação do voo.
-- `dim_justificativa`: justificativa, com membro técnico `DESCONHECIDO` (chave 0) para ausências.
-- `dim_tipo_linha`: classificação do tipo de linha.
-- `dim_equipamento`: modelo do equipamento, com membro técnico `DESCONHECIDO` (chave 0) para ausências.
+## 5. Deduplicação e auditoria
 
-A tabela `fato_voo` contém as chaves estrangeiras das dimensões, os atributos operacionais, os horários previstos e reais, as medidas de diferença/atraso, `quantidade_voos = 1` e a proveniência.
+A deduplicação é realizada sobre os **20 campos originais brutos**, antes da normalização. `arquivo_origem`, `linha_origem` e metadados não participam da comparação.
 
-## 6. Destino e carga no PostgreSQL
+A ordenação é estável: nome do arquivo em ordem crescente e, dentro dele, `linha_origem` crescente. A primeira ocorrência do grupo é a representante. As demais são excedentes excluídas da camada analítica.
 
-O destino esperado é o banco PostgreSQL `vra_dw_2019`, no schema `dw_etl` (configurável). O script cria as tabelas dimensionais, a fato, a tabela de rejeições e o log por arquivo. Também cria índices para consultas por referência, tempo de partida, companhia, situação e rota.
+O arquivo `vra_duplicatas_excluidas.csv.gz` registra cada excedente com os 20 valores originais, `ano_origem`, `arquivo_origem`, `linha_origem`, identificador do grupo, quantidade de ocorrências e arquivo/linha da ocorrência representante. Também são anexados motivos diagnósticos de validação para permitir medir a interseção duplicatas × inválidos.
 
-O script não cria o banco de dados PostgreSQL. Antes da execução, o banco `vra_dw_2019` deve existir e as credenciais devem estar configuradas em um arquivo `.env` local ou em variáveis de ambiente. A senha não deve ser incluída no código ou no GitHub.
+O contrato também determina que possíveis duplicidades que só aparecem depois de `TRIM`/`UPPER` sejam informadas, sem exclusão adicional. Por isso, `vra_possiveis_duplicatas_padronizacao.csv.gz` sinaliza os grupos que ficam iguais depois dessas operações. Esses registros continuam na camada tratada e na Fato, caso sejam elegíveis.
 
-Por segurança, o script não substitui tabelas já existentes por padrão. Para refazer uma carga no mesmo schema, é necessário usar explicitamente `--replace`; essa opção apaga e recria as tabelas ETL desse schema.
+A validação diagnóstica das ocorrências excedentes existe apenas para medir a interseção com inválidos. A rejeição analítica é contada sobre o conjunto deduplicado, evitando subtrair a mesma linha duas vezes.
 
-## 7. Saídas e indicadores da execução
+## 6. Rejeições, anomalias e campos obrigatórios
 
-O pipeline gera os seguintes arquivos na pasta de saída:
+Uma linha só entra na Fato quando tiver valor válido em todos os cinco campos obrigatórios definidos na seção 6 do contrato:
 
-| Arquivo/pasta | Conteúdo |
+1. `companhia_icao`;
+2. `aeroporto_origem`;
+3. `aeroporto_destino`;
+4. `partida_prevista`;
+5. `chegada_prevista`.
+
+Ausência de campo obrigatório ou data prevista preenchida inválida gera rejeição com todos os motivos identificados. A linha continua preservada na camada bruta. A tabela/arquivo de rejeições contém os valores canônicos, proveniência, `motivo_rejeicao` e uma cópia dos valores originais com prefixo `bruto__`.
+
+Campos opcionais não causam rejeição por si só: horários reais, justificativa, equipamento, código DI, assentos, `numero_voo`, `tipo_linha`, situação e `referencia`. Data real inválida, `referencia` inválida e número de assentos inválido são registrados em `vra_anomalias.csv.gz`; os valores tratados são nulos. O relatório de anomalias também conserva os valores de origem com prefixo `bruto__`.
+
+`REALIZADO`, `CANCELADO` e `NÃO INFORMADO` são preservados como categorias distintas. Um horário real nulo não é interpretado como cancelamento.
+
+## 7. Métricas temporais
+
+Quando ambos os horários existem:
+
+- `diferenca_partida_min = partida_real - partida_prevista`, em minutos e com sinal;
+- `diferenca_chegada_min = chegada_real - chegada_prevista`, em minutos e com sinal;
+- `atraso_partida_min = max(diferenca_partida_min, 0)`;
+- `atraso_chegada_min = max(diferenca_chegada_min, 0)`.
+
+Quando o horário real não existe ou não é válido, a diferença e o atraso ficam `NULL`, não zero.
+
+São geradas `partida_atipica_flag` e `chegada_atipica_flag` quando o valor absoluto da diferença supera 1.440 minutos. Quando a diferença não pode ser calculada, a flag fica `FALSE`. Os valores atípicos são sinalizados, não corrigidos, truncados ou removidos.
+
+`partida_ano_diverge_flag` registra quando o ano de `partida_prevista` difere de `ano_origem` (2019). O registro não é excluído por essa diferença. Nenhuma conversão de fuso horário é aplicada.
+
+## 8. Esquema estrela
+
+A granularidade da Fato é uma etapa de voo elegível, depois da exclusão das ocorrências excedentes exatas e da aplicação das regras de campos obrigatórios.
+
+Dimensões geradas:
+
+- `dim_tempo`;
+- `dim_companhia_aerea`;
+- `dim_aeroporto`;
+- `dim_situacao_voo`;
+- `dim_justificativa`;
+- `dim_tipo_linha`;
+- `dim_equipamento`.
+
+As chaves técnicas são criadas no ETL. `dim_justificativa` e `dim_equipamento` têm membro de chave 0 com valor `DESCONHECIDO` para ausências. `id_situacao` e `id_tipo_linha` podem ser nulos quando a categoria não estiver presente, pois esses campos não fazem parte dos cinco obrigatórios. Os códigos ICAO são as chaves naturais de companhia e aeroporto.
+
+Conflitos de descrição para o mesmo código natural são exportados para `conflitos_dimensoes.csv` e interrompem a publicação da dimensão, evitando escolha arbitrária. A Fato não recebe as flags de duplicata; elas permanecem nas auditorias.
+
+## 9. Saídas geradas
+
+Na pasta `dados/processados/2019/`:
+
+| Saída | Conteúdo |
 |---|---|
-| `staging/` | 12 partições mensais padronizadas, com proveniência e status de tratamento |
-| `fato_voo.csv.gz` | Exportação da tabela fato |
-| `dim_*.csv.gz` | Exportações das sete dimensões |
-| `rejeicoes.csv.gz` | Registros rejeitados e seus motivos |
-| `duplicatas_removidas.csv.gz` | Ocorrências excedentes removidas na deduplicação |
-| `etl_log_arquivos.csv` | Contagens e auditoria por CSV mensal |
-| `qualidade_colunas.csv` | Nulos por coluna na staging |
-| `conflitos_dimensoes.csv.gz` | Divergências de descrição por chave natural, quando encontradas |
-| `etl_resumo.json` | Resumo final da execução, dimensões, contagens e status da carga PostgreSQL |
+| `vra_bruta/` | Cópias byte a byte dos 12 CSVs e manifesto SHA-256 |
+| `vra_tratada.csv.gz` | Registros válidos, únicos por igualdade bruta exata, com nomes canônicos e métricas |
+| `fato_voo.csv.gz` | Fato com chaves técnicas, atributos, métricas e proveniência |
+| `vra_duplicatas_excluidas.csv.gz` | Ocorrências excedentes de duplicatas exatas e referência à representante |
+| `vra_possiveis_duplicatas_padronizacao.csv.gz` | Possíveis duplicidades somente após trim/upper; não são excluídas |
+| `vra_rejeicoes.csv.gz` | Representantes rejeitados, motivos, proveniência e valores originais |
+| `vra_anomalias.csv.gz` | Anomalias não bloqueantes e valores originais |
+| `dim_*.csv` | Exportação das sete dimensões |
+| `resumo_qualidade.csv` / `etl_resumo.json` | Indicadores gerais, interseção e equação de conciliação |
+| `etl_log_arquivos.csv` | Contagens e informações por arquivo mensal |
+| `conflitos_dimensoes.csv` | Conflitos de descrição, quando encontrados |
 
-Os valores finais de linhas lidas, duplicatas removidas, rejeições, registros carregados e contagens dimensionais devem ser copiados do `etl_resumo.json` produzido pela execução no ambiente do projeto. Não são repetidos aqui os resultados da versão anterior em SQLite, pois ela preservava duplicatas e usava uma regra diferente.
+Com a carga PostgreSQL habilitada, o schema padrão é `dw_etl` e contém também `vra_bruta`, `vra_tratada`, `vra_duplicatas_excluidas`, `vra_possiveis_duplicatas_padronizacao`, `vra_rejeicoes`, `vra_anomalias`, `resumo_qualidade`, `log_carga_arquivo`, dimensões e Fato.
 
-## 8. Verificações realizadas nesta revisão
+## 10. Execução
 
-- Compilação sintática do script Python (`py_compile`): concluída sem erro.
-- Teste funcional com CSVs sintéticos: confirmou a remoção de uma duplicata exata distribuída entre dois meses, a preservação da primeira ocorrência, a geração de uma rejeição por data prevista ausente e a carga das linhas válidas para os arquivos tabulares.
-- O teste sintético foi executado com `--skip-db`; portanto, ele valida o tratamento e as exportações, mas **não equivale a uma execução da base real de 2019 nem a uma validação de conexão com o PostgreSQL local do usuário**.
+Instale as dependências:
 
-## 9. Reprodução no Windows / VS Code
+```powershell
+python -m pip install -r requirements.txt
+```
 
-1. Instalar as dependências listadas em `requirements.txt` em um ambiente virtual.
-2. Criar o banco `vra_dw_2019` no PostgreSQL.
-3. Copiar `.env.example` para `.env` e informar a senha local do PostgreSQL em `PGPASSWORD`.
-4. Colocar os 12 CSVs em `dados/brutos/2019/`.
-5. Executar a partir da raiz do projeto:
+Crie o banco `vra_dw_2019` no PostgreSQL/pgAdmin antes da primeira carga. Configure um arquivo `.env` na raiz do projeto, usando `.env.example` como modelo. Exemplo de variáveis:
+
+```dotenv
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=vra_dw_2019
+PGUSER=postgres
+PGPASSWORD=sua_senha_local
+PGSCHEMA=dw_etl
+```
+
+A partir da raiz do projeto:
 
 ```powershell
 python etl_vra_anac_2019.py --input-dir "dados/brutos/2019" --output-dir "dados/processados/2019"
 ```
 
-Para refazer uma carga já existente no schema `dw_etl`, executar explicitamente:
-
-```powershell
-python etl_vra_anac_2019.py --input-dir "dados/brutos/2019" --output-dir "dados/processados/2019" --replace
-```
-
-Para testar apenas o processamento e as exportações, sem conexão ao PostgreSQL:
+Para testar apenas a transformação e gerar os arquivos, sem PostgreSQL:
 
 ```powershell
 python etl_vra_anac_2019.py --input-dir "dados/brutos/2019" --output-dir "dados/processados/2019" --skip-db
 ```
 
-O notebook `etl_vra_anac_2019.ipynb` chama o mesmo script para evitar que existam duas implementações diferentes da regra ETL.
+Por segurança, uma carga não substitui tabelas já existentes. Para apagar e recriar somente as tabelas ETL listadas no schema configurado, use `--replace` conscientemente:
 
-## 10. Limitações e próximas etapas
+```powershell
+python etl_vra_anac_2019.py --input-dir "dados/brutos/2019" --output-dir "dados/processados/2019" --replace
+```
 
-1. Executar o pipeline completo com os 12 CSVs reais e registrar os indicadores finais no relatório após consultar `etl_resumo.json`.
-2. Atualizar o contrato de dados do grupo para refletir formalmente a deduplicação aprovada.
-3. Conferir os cabeçalhos, formatos e domínios de 2020 e 2021 antes da integração dos anos.
-4. Confirmar, com documentação da fonte, a convenção de fuso horário e a semântica da coluna `referencia`.
-5. Implementar o pipeline ELT separadamente, com camada RAW e transformações SQL no banco.
-6. Reconciliar ETL e ELT e consolidar análises dos três anos para a entrega final do grupo.
+O notebook `etl_vra_anac_2019.ipynb` executa o mesmo `run_etl` e apresenta as etapas de conferência.
 
-### Observação sobre Google Colab
+## 11. Testes realizados nesta entrega
 
-O notebook pode ser aberto no Colab, mas uma instância Colab não consegue acessar automaticamente o PostgreSQL instalado em `localhost` no computador do usuário. Para executar a carga a partir do Colab, é necessário um PostgreSQL acessível pela rede (por exemplo, uma instância remota configurada para esse uso) e credenciais armazenadas nos Secrets do Colab. Para a instalação PostgreSQL local, execute o notebook no VS Code/Jupyter local.
+Foram realizados testes locais com arquivos CSV sintéticos, contendo 12 arquivos mensais (alguns sem registros) e casos preparados para validar as regras. O teste verificou:
+
+- duplicata exata entre dois meses é reduzida a uma representante;
+- registros que só ficam iguais após remover espaços/maiúsculas são sinalizados, mas continuam no resultado;
+- os cinco campos obrigatórios definem a rejeição;
+- horário real inválido, referência inválida e assentos negativos geram anomalias, não rejeição por si só;
+- zeros à esquerda de `numero_voo` permanecem no CSV exportado;
+- a cópia bruta é idêntica ao arquivo de origem;
+- a equação de conciliação fecha.
+
+**Resultado do teste sintético:** 5 registros brutos, 1 ocorrência excedente removida, 1 registro rejeitado e 3 registros na Fato; 1 grupo exato repetido; 2 linhas sinalizadas como possíveis duplicatas após trim/upper e mantidas; conciliação aprovada. Esses valores são exclusivamente do conjunto sintético de teste, não dos CSVs reais da ANAC.
+
+Também foi executado `python -m py_compile` no script. A estrutura do notebook foi validada como JSON e as células Python foram verificadas quanto à sintaxe, desconsiderando as linhas de instalação `%pip`.
+
+Foi executado um segundo cenário sintético específico para a interseção: uma linha inválida repetida exatamente em dois meses e uma linha válida adicional. O teste confirmou que a excedente inválida fica na auditoria de duplicatas, a representante inválida é contada uma única vez em rejeições e a equação não subtrai a linha duas vezes. Um cenário com todos os representantes rejeitados também foi testado para confirmar que as auditorias ainda são geradas com a Fato vazia.
+
+**Ainda não foi executado nesta entrega:** o processamento dos 12 CSVs reais e a conexão/carga no PostgreSQL do computador do usuário. Portanto, nenhum número final de 2019 é declarado como resultado medido desta versão.
+
+## 12. Referências de contagem do contrato e conciliação real pendente
+
+A seção 10 do contrato v1.1 apresenta referências da exploração de 2019: 983.414 linhas brutas, 914 linhas envolvidas em duplicatas exatas, 444 grupos repetidos e 470 ocorrências excedentes. A deduplicação levaria a 982.944 linhas antes das rejeições. O contrato indica até 18 rejeições e 982.926 linhas na Fato como estimativa sujeita à interseção.
+
+Esses números são referências para conferência, não valores impostos pelo script. A implementação atual recalcula todos os indicadores a partir dos arquivos efetivamente fornecidos. A equação que deve fechar é:
+
+```text
+linhas brutas = ocorrências excedentes excluídas
+              + rejeições remanescentes após deduplicação
+              + linhas elegíveis carregadas na Fato
+```
+
+A interseção entre excedentes duplicados e inválidos é apresentada separadamente em `intersecao_excedentes_duplicados_invalidos`, evitando dupla subtração.
+
+## 13. Observação operacional
+
+Para aplicar a regra de duplicidade global entre os 12 meses, o script concatena os arquivos do ano em memória durante o processamento. A execução deve ser feita em uma máquina com memória disponível suficiente para o conjunto completo e as estruturas intermediárias do Pandas. A cópia bruta é feita em blocos para calcular os hashes sem carregar o arquivo inteiro de uma vez.
+
+## 14. Pendências antes da publicação
+
+1. Executar o notebook ou script com os 12 CSVs reais de 2019.
+2. Conferir `etl_resumo.json`, `resumo_qualidade.csv`, `vra_duplicatas_excluidas.csv.gz` e `vra_rejeicoes.csv.gz` contra as referências do contrato.
+3. Executar a carga PostgreSQL e verificar as contagens e `foreign_key_orphans = 0`.
+4. Resolver eventuais conflitos de descrição ICAO antes da publicação.
+5. Confrontar amostras e totais com o ELT 2019 e registrar a conciliação do grupo.
+6. Manter a investigação de fuso horário, semântica de `referencia` e limiar de pontualidade como pendências do grupo; o script não presume respostas para essas questões.
+
+---
+
+**Conclusão:** a implementação foi ajustada para a política v1.1, incluindo deduplicação bruta exata, auditoria de excedentes, sinalização separada de possíveis duplicidades após trim/upper, rejeições pelos cinco campos obrigatórios, métricas temporais, anomalias e preservação da origem. A aceitação final depende da execução com os arquivos reais e da conciliação com o pipeline ELT.
