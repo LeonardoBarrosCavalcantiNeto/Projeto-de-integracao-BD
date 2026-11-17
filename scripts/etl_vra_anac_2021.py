@@ -546,20 +546,22 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
 
     df_sem_duplicatas = df_ordenada.loc[~mascara_excedentes].copy()
 
-    # Localização da ocorrência preservada de cada conjunto de valores.
-    origens_preservadas = df_sem_duplicatas[
-        colunas_comuns + ["arquivo_origem", "linha_origem"]
-    ].rename(columns={
-        "arquivo_origem": "arquivo_preservado",
-        "linha_origem": "linha_preservada",
-    })
-
+    # Grupos seguem a primeira origem na ordem estável. Codeshare não compõe a chave.
+    grupos = df_ordenada.groupby(colunas_comuns, dropna=False, sort=False)
+    df_ordenada["grupo_duplicata_id"] = grupos.ngroup().add(1).map(lambda n: f"2021-{n:07d}")
+    df_ordenada["quantidade_ocorrencias"] = grupos["linha_origem"].transform("size")
+    representantes = df_ordenada.loc[~mascara_excedentes,
+        ["grupo_duplicata_id", "arquivo_origem", "linha_origem"]].rename(columns={
+            "arquivo_origem": "arquivo_preservado", "linha_origem": "linha_preservada",
+        })
     df_duplicatas = df_ordenada.loc[mascara_excedentes].merge(
-        origens_preservadas,
-        on=colunas_comuns,
-        how="left",
-        validate="many_to_one",
+        representantes, on="grupo_duplicata_id", how="left", validate="many_to_one",
     )
+    textos_excedentes = padronizar_textos(df_duplicatas)
+    motivos_excedentes = motivos_obrigatorios(textos_excedentes, converter_tipos(textos_excedentes))
+    df_duplicatas["motivo_rejeicao_diagnostico"] = motivos_excedentes
+    df_duplicatas["invalido_diagnostico"] = motivos_excedentes.map(bool).astype(bool)
+    intersecao_excedentes_invalidos = int(df_duplicatas["invalido_diagnostico"].sum())
 
     if len(df_bruta) != len(df_sem_duplicatas) + len(df_duplicatas):
         raise ValueError("Falha na reconciliação da deduplicação.")
@@ -654,6 +656,7 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
         "ano_origem": ano_origem,
         "bruta": len(df_bruta),
         "duplicatas_excedentes": len(df_duplicatas),
+        "intersecao_excedentes_duplicados_invalidos": intersecao_excedentes_invalidos,
         "rejeicoes": len(df_rejeicoes),
         "tratada": len(df_tratada),
         "grupos_duplicados": len(comparacao_codeshare),
@@ -756,11 +759,15 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
             ("vra_duplicatas_excluidas", df_duplicatas),
             ("vra_anomalias", vra_anomalias),
             ("vra_atipicos", vra_atipicos),
-            ("duplicatas_pos_trim_upper", duplicatas_pos_trim_upper),
+            ("vra_possiveis_duplicatas_padronizacao", duplicatas_pos_trim_upper),
             ("duplicatas_apos_padronizacao", duplicatas_apos_padronizacao),
             ("partidas_previstas_fora_ano", partidas_previstas_fora_ano),
         ]:
             exportar_tabela(nome, base)
+        # Remove somente o nome legado de uma auditoria gerada por este pipeline.
+        legado = PASTA_SAIDA / "duplicatas_pos_trim_upper.csv.gz"
+        if legado.is_file():
+            legado.unlink()
         for nome, base in [
             ("inventario_arquivos", inventario), ("resumo_qualidade", resumo_qualidade),
             ("mensal", mensal), ("motivos_rejeicao", contagem_motivos),
@@ -774,6 +781,19 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
             exportar_tabela("vra_bruta", df_bruta)
 
         resumo_dict = json.loads(resumo_qualidade.to_json(orient="records"))[0]
+        etl_resumo = {
+            "indicadores": resumo_dict,
+            "conciliacao": {
+                "equacao": "bruta = duplicatas_excedentes + rejeicoes + tratada",
+                "bruta": len(df_bruta), "duplicatas_excedentes": len(df_duplicatas),
+                "rejeicoes": len(df_rejeicoes), "tratada": len(df_tratada),
+                "conciliada": True,
+                "observacao": "Excedentes inválidos são diagnósticos; não são subtraídos outra vez.",
+            },
+        }
+        (PASTA_SAIDA / "etl_resumo.json").write_text(
+            json.dumps(etl_resumo, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         metadados_execucao = {
             "autor": "Arthur", "pipeline": "ETL", "ano_origem": ano_origem,
             "versao_contrato": "1.1", "inicio_utc": inicio_execucao,
