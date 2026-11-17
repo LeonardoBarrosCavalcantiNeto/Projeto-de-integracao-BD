@@ -1,0 +1,25 @@
+indicador,valor
+ano_origem,2020
+versao_contrato,1.1
+brutos,483545
+duplicatas_excedentes,124
+grupos_duplicados,124
+linhas_envolvidas_duplicatas,248
+rejeitados,1512
+tratados,481909
+motivos_rejeicao,3024
+intersecao_excedentes_invalidos,0
+possiveis_duplicatas_apos_padronizacao,0
+anomalias_opcionais,0
+partidas_ano_divergente,15
+partidas_reais_nulas,21845
+chegadas_reais_nulas,21845
+partidas_atipicas,286
+chegadas_atipicas,331
+reconciliacao_ok,True
+carga_postgresql,nao_executada
+estrela_pronta,True
+escopo_dimensoes,experimental_2020; integrar 2019 e 2021 antes da consolidacao
+dimensoes,"{""dim_tempo"": 368, ""dim_companhia_aerea"": 115, ""dim_aeroporto"": 385, ""dim_situacao_voo"": 3, ""dim_justificativa"": 46, ""dim_tipo_linha"": 9, ""dim_equipamento"": 62}"
+fingerprint,2422555ee20cbd20507f8c42702f2f8b6f72907e80f1767f1f392f2c78acf9ef
+fontes_preservadas,True

@@ -18,3 +18,20 @@ __pycache__/
 
 # Arquivos do macOS
 .DS_Store
+
+# Diagnósticos complementares regeneráveis do ETL 2020 (evidências principais em resultados/)
+/resultados/validacoes/analise_2_mensal_2020.csv
+/resultados/validacoes/analise_2_sql_2020.csv
+/resultados/validacoes/comparacao_preliminar_etl_elt_2020.json
+/resultados/validacoes/dim_aeroporto_experimental_2020.csv
+/resultados/validacoes/partidas_ano_divergente_etl_2020.csv.gz
+/resultados/validacoes/resolucoes_aeroportos_aplicadas_etl_2020.csv.gz
+
+# Auditorias detalhadas de 2020 ficam locais; a entrega mantém os resumos e o notebook
+/resultados/logs/metadados_execucao_etl_2020.json
+/resultados/rejeicoes/*_etl_2020.csv.gz
+/resultados/validacoes/analise_2_sql_2020.json
+/resultados/validacoes/atipicos_etl_2020.csv
+/resultados/validacoes/mensal_etl_2020.csv
+/resultados/validacoes/situacao_voo_etl_2020.csv
+/resultados/validacoes/vra_anomalias_etl_2020.csv.gz

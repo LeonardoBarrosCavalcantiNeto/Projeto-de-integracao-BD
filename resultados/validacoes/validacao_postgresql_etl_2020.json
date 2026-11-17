@@ -1,0 +1,93 @@
+{
+  "verificado_em_utc": "2026-11-16T17:03:46.865115+00:00",
+  "modo": "somente_leitura",
+  "schema": "etl_2020",
+  "banco": "vra_dw_2020",
+  "tabelas": [
+    "dim_aeroporto",
+    "dim_companhia_aerea",
+    "dim_equipamento",
+    "dim_justificativa",
+    "dim_situacao_voo",
+    "dim_tempo",
+    "dim_tipo_linha",
+    "execucoes",
+    "fato_voo",
+    "log_carga_arquivo",
+    "motivos_rejeicao",
+    "resumo_qualidade",
+    "vra_anomalias",
+    "vra_bruta",
+    "vra_duplicatas_excluidas",
+    "vra_possiveis_duplicatas_padronizacao",
+    "vra_rejeicoes",
+    "vra_tratada"
+  ],
+  "contagens": {
+    "vra_bruta": 483545,
+    "vra_duplicatas_excluidas": 124,
+    "vra_rejeicoes": 1512,
+    "vra_tratada": 481909,
+    "fato_voo": 481909,
+    "dim_aeroporto": 385
+  },
+  "reconciliacao_ok": true,
+  "origens_duplicadas": 0,
+  "orfaos_por_fk": {
+    "id_companhia": 0,
+    "id_aeroporto_origem": 0,
+    "id_aeroporto_destino": 0,
+    "id_tempo_partida": 0,
+    "id_tempo_chegada": 0,
+    "id_situacao": 0,
+    "id_justificativa": 0,
+    "id_tipo_linha": 0,
+    "id_equipamento": 0
+  },
+  "metricas": {
+    "partida": {
+      "reais_nulas": 21845,
+      "atipicos": 286,
+      "diferencas_inconsistentes": 0,
+      "atrasos_inconsistentes": 0,
+      "flags_inconsistentes": 0
+    },
+    "chegada": {
+      "reais_nulas": 21845,
+      "atipicos": 331,
+      "diferencas_inconsistentes": 0,
+      "atrasos_inconsistentes": 0,
+      "flags_inconsistentes": 0
+    }
+  },
+  "categorias": {
+    "CANCELADO": 21487,
+    "NÃO INFORMADO": 358,
+    "REALIZADO": 460064
+  },
+  "datas_anomalas": [
+    {
+      "arquivo_origem": "VRA_2020_02.csv",
+      "linha_origem": 28805,
+      "chegada_prevista": "2020-02-04 07:00:00",
+      "chegada_real": "2022-02-04 06:35:00",
+      "diferenca_chegada_min": "1052615.00",
+      "chegada_atipica_flag": true
+    },
+    {
+      "arquivo_origem": "VRA_2020_12.csv",
+      "linha_origem": 19916,
+      "chegada_prevista": "2020-12-23 03:40:00",
+      "chegada_real": "2202-12-23 06:16:00",
+      "diferenca_chegada_min": "95721276.00",
+      "chegada_atipica_flag": true
+    }
+  ],
+  "schemas_disponiveis": [
+    "etl_2020"
+  ],
+  "fingerprint_da_carga_confere": true,
+  "reexecucao_manualmente_confirmada": true,
+  "validacoes_aprovadas": true,
+  "fonte_confirmacao_reexecucao": "Integrante confirmou nesta conversa o retorno status: ja_carregada."
+}
