@@ -1,0 +1,126 @@
+{
+  "autor_adaptacao": "Murilo Acioli",
+  "base": "notebooks/elt/elt_2020.ipynb (Gustavo José Arraes de Queiroz)",
+  "fonte": "https://siros.anac.gov.br/siros/registros/diversos/vra/2021/",
+  "pipeline": "ELT",
+  "ano_origem": 2021,
+  "versao_pipeline": "1.0",
+  "inicio_utc": "2026-11-16T22:13:22.318227+00:00",
+  "fim_utc": "2026-11-16T22:23:51.939163+00:00",
+  "zip_origem": "data_2021_anac.zip",
+  "sha256_zip": "d664772dfc3113a45a60aa67bd4daffb10b00088f9ff85bb6a22a05439020399",
+  "arquivos": [
+    {
+      "membro_zip": "VRA_2021_01.csv",
+      "arquivo_origem": "VRA_2021_01.csv",
+      "mes": 1,
+      "colunas": 21,
+      "registros": 61920,
+      "bytes": 18281868,
+      "sha256": "6ee26c0fef40bf502f0557abd4d321a81ed0e9abb0c101445f7dffdb295078c3"
+    },
+    {
+      "membro_zip": "VRA_2021_02.csv",
+      "arquivo_origem": "VRA_2021_02.csv",
+      "mes": 2,
+      "colunas": 21,
+      "registros": 46078,
+      "bytes": 13667479,
+      "sha256": "693a2bacdad0a3cedaa6128c3cc10bb0691ccf23958c5e8cbccf5a5feb5d47fb"
+    },
+    {
+      "membro_zip": "VRA_2021_03.csv",
+      "arquivo_origem": "VRA_2021_03.csv",
+      "mes": 3,
+      "colunas": 21,
+      "registros": 41701,
+      "bytes": 12444242,
+      "sha256": "b590ba0323cbd37ef50f9272cf067ffe4176607516222bf9dbffbc03f7bd6a91"
+    },
+    {
+      "membro_zip": "VRA_2021_04.csv",
+      "arquivo_origem": "VRA_2021_04.csv",
+      "mes": 4,
+      "colunas": 20,
+      "registros": 30224,
+      "bytes": 8455519,
+      "sha256": "a55b75cceb5e90fa8f8d8ed0b7910b8dfcb2c45f9ddddeecee68547758bd5bb0"
+    },
+    {
+      "membro_zip": "VRA_2021_05.csv",
+      "arquivo_origem": "VRA_2021_05.csv",
+      "mes": 5,
+      "colunas": 20,
+      "registros": 37341,
+      "bytes": 10464126,
+      "sha256": "49907e9546d02fd3cbbdcc5dc62bb8d64130ce91c03f05a1a1d468db0c43132b"
+    },
+    {
+      "membro_zip": "VRA_2021_06.csv",
+      "arquivo_origem": "VRA_2021_06.csv",
+      "mes": 6,
+      "colunas": 20,
+      "registros": 42512,
+      "bytes": 11928409,
+      "sha256": "babaf8882b29fa3b89a83df226af6385519fbe222ae3355952a708e172f93fb9"
+    },
+    {
+      "membro_zip": "VRA_2021_07.csv",
+      "arquivo_origem": "VRA_2021_07.csv",
+      "mes": 7,
+      "colunas": 21,
+      "registros": 55555,
+      "bytes": 16716773,
+      "sha256": "fa1a34e334ed3faa5ad5d9bc1e7c39364744b68a4b8fd87d64bd68295c19ca75"
+    },
+    {
+      "membro_zip": "VRA_2021_08.csv",
+      "arquivo_origem": "VRA_2021_08.csv",
+      "mes": 8,
+      "colunas": 20,
+      "registros": 56367,
+      "bytes": 15837098,
+      "sha256": "4dd71d230cbe058fde0a645fac3897fbd44a33cd61326ae88d5f90341fb7d59f"
+    },
+    {
+      "membro_zip": "VRA_2021_09.csv",
+      "arquivo_origem": "VRA_2021_09.csv",
+      "mes": 9,
+      "colunas": 21,
+      "registros": 58362,
+      "bytes": 17466130,
+      "sha256": "f25fa7df2051735f0b09046f6242f34e9abb435dbf3dfeb681217a9c86107052"
+    },
+    {
+      "membro_zip": "VRA_2021_10.csv",
+      "arquivo_origem": "VRA_2021_10.csv",
+      "mes": 10,
+      "colunas": 20,
+      "registros": 61288,
+      "bytes": 17231843,
+      "sha256": "eb18165d34365084e57c3f6a7f6cbbad9428f06c20f90616804b5e94946b3d2f"
+    },
+    {
+      "membro_zip": "VRA_2021_11.csv",
+      "arquivo_origem": "VRA_2021_11.csv",
+      "mes": 11,
+      "colunas": 21,
+      "registros": 66649,
+      "bytes": 19513413,
+      "sha256": "933c75b29dd5d7b9ab185d81cd199cde7dd9a7ac31b59e6ffc5ecb2c7c749df0"
+    },
+    {
+      "membro_zip": "VRA_2021_12.csv",
+      "arquivo_origem": "VRA_2021_12.csv",
+      "mes": 12,
+      "colunas": 21,
+      "registros": 74151,
+      "bytes": 22010312,
+      "sha256": "96919fc3a01ef60ffaa634d469667f57af7d0d2f3be18cdd9c27c4c76c950928"
+    }
+  ],
+  "python": "3.13.18",
+  "postgresql": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+  "validacao": "Verificações da etapa 9 passaram; reconciliação mensal da etapa 10 passou.",
+  "comparacao_etl": "Pendente de comparação com o resultado do colega."
+}
