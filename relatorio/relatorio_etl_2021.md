@@ -1,6 +1,6 @@
 # Relatório técnico — ETL VRA/ANAC 2021
 
-**Responsável ETL:** Arthur. **Parceiro ELT:** Murilo Acioli.
+**Responsável ETL:** Arthur. **Responsável ELT:** Murilo Acioli.
 **Contrato:** VRA/ANAC 2019–2021, versão 1.1.
 **Escopo:** camada tratada, auditorias, rastreabilidade e carga PostgreSQL opcional.
 Dimensões e Fato serão integradas coletivamente.
