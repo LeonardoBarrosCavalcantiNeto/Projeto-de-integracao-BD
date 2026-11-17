@@ -17,6 +17,7 @@ import csv
 import hashlib
 import json
 import re
+import shutil
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -95,6 +96,52 @@ def sha256_arquivo(caminho):
         for bloco in iter(lambda: entrada.read(1024 * 1024), b""):
             digest.update(bloco)
     return digest.hexdigest()
+
+def validar_entradas(arquivos):
+    """Valida o CSV antes do Pandas; linha_origem conta registros lógicos."""
+    cabecalhos, inventario = {}, []
+    for arquivo in arquivos:
+        hash_antes = sha256_arquivo(arquivo)
+        with arquivo.open(encoding="utf-8-sig", newline="") as entrada:
+            leitor = csv.reader(entrada, delimiter=";", strict=True)
+            cabecalho = next(leitor, [])
+            exigir(cabecalho in (colunas_comuns, colunas_comuns + ["Codeshare"]),
+                   f"Cabeçalho inválido (nomes ou ordem) em {arquivo.name}.")
+            quantidade = 0
+            for numero, registro in enumerate(leitor, start=2):
+                exigir(len(registro) == len(cabecalho),
+                       f"{arquivo.name}, registro {numero}: esperados {len(cabecalho)} "
+                       f"campos, encontrados {len(registro)}.")
+                quantidade += 1
+        exigir(sha256_arquivo(arquivo) == hash_antes,
+               f"Arquivo alterado durante a validação: {arquivo.name}")
+        cabecalhos[arquivo.name] = cabecalho
+        inventario.append({
+            "arquivo": arquivo.name, "mes": int(arquivo.stem[-2:]),
+            "bytes": arquivo.stat().st_size, "sha256": hash_antes,
+            "colunas_originais": len(cabecalho), "registros_csv": quantidade,
+        })
+    return cabecalhos, pd.DataFrame(inventario)
+
+
+def preservar_brutos(arquivos, inventario, pasta_saida):
+    """Copia bytes originais, inclusive BOM e quebras de linha, e verifica SHA-256."""
+    destino = pasta_saida / "vra_bruta"
+    destino.mkdir(parents=True, exist_ok=True)
+    hashes = inventario.set_index("arquivo")["sha256"]
+    manifesto = []
+    for arquivo in arquivos:
+        copia = destino / arquivo.name
+        exigir(arquivo.resolve() != copia.resolve(), "A cópia bruta deve ter outro caminho.")
+        shutil.copyfile(arquivo, copia)
+        hash_copia = sha256_arquivo(copia)
+        exigir(hash_copia == hashes[arquivo.name] == sha256_arquivo(arquivo),
+               f"Hash divergente na cópia bruta: {arquivo.name}")
+        manifesto.append({"arquivo": arquivo.name, "sha256_original": hashes[arquivo.name],
+                          "sha256_copia": hash_copia, "bytes": copia.stat().st_size,
+                          "hashes_iguais": True})
+    pd.DataFrame(manifesto).to_csv(destino / "manifesto_sha256.csv", index=False)
+    return inventario.assign(sha256_copia=inventario["sha256"], copia_bruta_verificada=True)
 
 def padronizar_textos(base):
     saida = base[colunas_comuns + metadados].copy()
@@ -355,41 +402,13 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
         raise FileNotFoundError(f"Arquivos não encontrados: {faltantes}")
     if {p.name for p in pasta_dados.glob("VRA_2021_*.csv")} != {p.name for p in arquivos}:
         raise ValueError("Esperados exatamente os 12 nomes mensais VRA_2021_MM.csv.")
-    hashes_entrada = {arquivo.name: sha256_arquivo(arquivo) for arquivo in arquivos}
     print("[ETL 2021] Extraindo e validando os 12 arquivos.")
-    with arquivos[0].open(encoding="utf-8-sig", newline="") as entrada:
-        cabecalho_janeiro = next(csv.reader(entrada, delimiter=";", strict=True), [])
-    cabecalhos_por_arquivo = {}
-    verificacoes = []
-
-    for arquivo in arquivos:
-        with arquivo.open(encoding="utf-8-sig", newline="") as entrada:
-            cabecalho = next(csv.reader(entrada, delimiter=";", strict=True), [])
-
-        if len(cabecalho) != len(set(cabecalho)):
-            raise ValueError(f"Cabeçalho com nomes repetidos: {arquivo.name}")
-
-        adicionais = [c for c in cabecalho if c not in colunas_comuns]
-        ausentes = [c for c in colunas_comuns if c not in cabecalho]
-        desconhecidas = [c for c in adicionais if c != "Codeshare"]
-
-        if ausentes or desconhecidas:
-            raise ValueError(
-                f"Esquema inesperado em {arquivo.name}: "
-                f"ausentes={ausentes}; adicionais desconhecidas={desconhecidas}."
-            )
-
-        cabecalhos_por_arquivo[arquivo.name] = cabecalho
-        verificacoes.append({
-            "arquivo": arquivo.name,
-            "quantidade_colunas": len(cabecalho),
-            "igual_a_janeiro": cabecalho == cabecalho_janeiro,
-            "colunas_adicionais": adicionais,
-            "colunas_ausentes": ausentes,
-            "codeshare_presente": "Codeshare" in cabecalho,
-        })
-
-    conferencia_cabecalhos = pd.DataFrame(verificacoes)
+    cabecalhos_por_arquivo, inventario = validar_entradas(arquivos)
+    hashes_entrada = inventario.set_index("arquivo")["sha256"].to_dict()
+    conferencia_cabecalhos = pd.DataFrame([
+        {"arquivo": arquivo.name, "codeshare_presente": "Codeshare" in cabecalhos_por_arquivo[arquivo.name]}
+        for arquivo in arquivos
+    ])
 
     resumo_codeshare = []
 
@@ -456,52 +475,9 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
     print(f"Total de colunas, incluindo metadados: {len(df_bruta.columns)}")
 
     contagens_pandas = df_bruta.groupby("arquivo_origem").size()
-    inventario = []
-
-    for arquivo in arquivos:
-        with arquivo.open(encoding="utf-8-sig", newline="") as entrada:
-            leitor = csv.reader(entrada, delimiter=";", strict=True)
-            cabecalho = next(leitor)
-            if cabecalho != cabecalhos_por_arquivo[arquivo.name]:
-                raise ValueError(f"Cabeçalho alterado durante a leitura: {arquivo.name}")
-
-            quantidade_campos = len(cabecalho)
-            quantidade_registros = 0
-
-            for linha_origem, registro in enumerate(leitor, start=2):
-                if len(registro) != quantidade_campos:
-                    raise ValueError(
-                        f"{arquivo.name}, registro {linha_origem}: "
-                        f"esperados {quantidade_campos} campos, "
-                        f"encontrados {len(registro)}."
-                    )
-                quantidade_registros += 1
-
-        if quantidade_registros == 0:
-            raise ValueError(f'CSV sem registros: {arquivo.name}')
-        quantidade_pandas = int(contagens_pandas[arquivo.name])
-        if quantidade_registros != quantidade_pandas:
-            raise ValueError(
-                f"Contagem divergente em {arquivo.name}: "
-                f"CSV={quantidade_registros}, Pandas={quantidade_pandas}."
-            )
-
-
-        sha256 = sha256_arquivo(arquivo)
-        if sha256 != hashes_entrada[arquivo.name]:
-            raise ValueError(f"Arquivo alterado durante a extração: {arquivo.name}")
-
-        inventario.append({
-            "arquivo": arquivo.name,
-            "mes": int(arquivo.stem[-2:]),
-            "bytes": arquivo.stat().st_size,
-            "sha256": sha256,
-            "colunas_originais": quantidade_campos,
-            "registros_csv": quantidade_registros,
-            "registros_pandas": quantidade_pandas,
-        })
-
-    inventario = pd.DataFrame(inventario)
+    inventario["registros_pandas"] = inventario["arquivo"].map(contagens_pandas).fillna(0).astype("int64")
+    exigir(inventario["registros_csv"].equals(inventario["registros_pandas"]),
+           "Contagem divergente entre leitor CSV e Pandas.")
     print("Conferência estrutural e de contagens concluída.")
 
     auditoria_esquema = resumo_codeshare.copy()
@@ -773,6 +749,7 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
     if EXPORTAR_EVIDENCIAS:
         exigir(validacao_concluida, "Execute a validação antes de exportar.")
         PASTA_SAIDA.mkdir(parents=True, exist_ok=True)
+        inventario = preservar_brutos(arquivos, inventario, PASTA_SAIDA)
         for nome, base in [
             ("vra_tratada", df_tratada),
             ("vra_rejeicoes", df_rejeicoes),
@@ -875,7 +852,7 @@ def main():
     parser.add_argument("--output-dir", required=True, help="Pasta das evidências geradas")
     parser.add_argument("--load-db", action="store_true", help="Carrega no PostgreSQL configurado no .env")
     parser.add_argument("--replace", action="store_true", help="Substitui somente tabelas deste pipeline no schema etl_2021")
-    parser.add_argument("--export-raw", action="store_true", help="Exporta também a cópia bruta com metadados")
+    parser.add_argument("--export-raw", action="store_true", help="Exporta também a tabela bruta regenerada com metadados (além das cópias originais)")
     args = parser.parse_args()
     if args.replace and not args.load_db:
         parser.error("--replace exige --load-db")
