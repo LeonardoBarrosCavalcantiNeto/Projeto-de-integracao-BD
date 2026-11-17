@@ -1,0 +1,10 @@
+{
+  "grupos_duplicados": 444,
+  "linhas_envolvidas_duplicatas_exatas": 914,
+  "ocorrencias_excedentes_excluidas": 470,
+  "linhas_apos_deduplicacao": 982944,
+  "brutos": 983414,
+  "rejeitados": 18,
+  "tratados": 982926,
+  "escopo": "fun\u00e7\u00f5es originais de extra\u00e7\u00e3o, deduplica\u00e7\u00e3o e transforma\u00e7\u00e3o; sem publica\u00e7\u00e3o do DW ETL"
+}

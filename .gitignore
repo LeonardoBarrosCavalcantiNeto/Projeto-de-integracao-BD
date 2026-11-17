@@ -35,3 +35,8 @@ __pycache__/
 /resultados/validacoes/mensal_etl_2020.csv
 /resultados/validacoes/situacao_voo_etl_2020.csv
 /resultados/validacoes/vra_anomalias_etl_2020.csv.gz
+
+# Cargas canônicas, bancos isolados e backups recuperáveis (nunca publicar)
+.local/
+backups/
+*.dump

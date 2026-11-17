@@ -1,0 +1,194 @@
+schema,tabela,conname,contype,convalidated
+dw,dw.dim_tempo,dim_tempo_ano_not_null,n,t
+dw,dw.dim_tempo,dim_tempo_data_key,u,t
+dw,dw.dim_tempo,dim_tempo_data_not_null,n,t
+dw,dw.dim_tempo,dim_tempo_dia_not_null,n,t
+dw,dw.dim_tempo,dim_tempo_dia_semana_not_null,n,t
+dw,dw.dim_tempo,dim_tempo_id_tempo_not_null,n,t
+dw,dw.dim_tempo,dim_tempo_mes_not_null,n,t
+dw,dw.dim_tempo,dim_tempo_pkey,p,t
+dw,dw.dim_tempo,dim_tempo_trimestre_not_null,n,t
+dw,dw.dim_companhia_aerea,dim_companhia_aerea_companhia_icao_key,u,t
+dw,dw.dim_companhia_aerea,dim_companhia_aerea_companhia_icao_not_null,n,t
+dw,dw.dim_companhia_aerea,dim_companhia_aerea_id_companhia_not_null,n,t
+dw,dw.dim_companhia_aerea,dim_companhia_aerea_pkey,p,t
+dw,dw.dim_aeroporto,dim_aeroporto_aeroporto_icao_key,u,t
+dw,dw.dim_aeroporto,dim_aeroporto_aeroporto_icao_not_null,n,t
+dw,dw.dim_aeroporto,dim_aeroporto_id_aeroporto_not_null,n,t
+dw,dw.dim_aeroporto,dim_aeroporto_pkey,p,t
+dw,dw.dim_situacao_voo,dim_situacao_voo_id_situacao_not_null,n,t
+dw,dw.dim_situacao_voo,dim_situacao_voo_pkey,p,t
+dw,dw.dim_situacao_voo,dim_situacao_voo_situacao_voo_key,u,t
+dw,dw.dim_situacao_voo,dim_situacao_voo_situacao_voo_not_null,n,t
+dw,dw.dim_justificativa,dim_justificativa_id_justificativa_not_null,n,t
+dw,dw.dim_justificativa,dim_justificativa_justificativa_key,u,t
+dw,dw.dim_justificativa,dim_justificativa_justificativa_not_null,n,t
+dw,dw.dim_justificativa,dim_justificativa_pkey,p,t
+dw,dw.dim_tipo_linha,dim_tipo_linha_id_tipo_linha_not_null,n,t
+dw,dw.dim_tipo_linha,dim_tipo_linha_pkey,p,t
+dw,dw.dim_tipo_linha,dim_tipo_linha_tipo_linha_key,u,t
+dw,dw.dim_tipo_linha,dim_tipo_linha_tipo_linha_not_null,n,t
+dw,dw.dim_equipamento,dim_equipamento_id_equipamento_not_null,n,t
+dw,dw.dim_equipamento,dim_equipamento_modelo_equipamento_key,u,t
+dw,dw.dim_equipamento,dim_equipamento_modelo_equipamento_not_null,n,t
+dw,dw.dim_equipamento,dim_equipamento_pkey,p,t
+dw,dw.fato_voo,fato_voo_ano_origem_arquivo_origem_linha_origem_key,u,t
+dw,dw.fato_voo,fato_voo_ano_origem_id_raw_fkey,f,t
+dw,dw.fato_voo,fato_voo_ano_origem_id_raw_key,u,t
+dw,dw.fato_voo,fato_voo_ano_origem_not_null,n,t
+dw,dw.fato_voo,fato_voo_arquivo_origem_not_null,n,t
+dw,dw.fato_voo,fato_voo_check,c,t
+dw,dw.fato_voo,fato_voo_check1,c,t
+dw,dw.fato_voo,fato_voo_check2,c,t
+dw,dw.fato_voo,fato_voo_check3,c,t
+dw,dw.fato_voo,fato_voo_check4,c,t
+dw,dw.fato_voo,fato_voo_check5,c,t
+dw,dw.fato_voo,fato_voo_chegada_atipica_flag_not_null,n,t
+dw,dw.fato_voo,fato_voo_chegada_prevista_not_null,n,t
+dw,dw.fato_voo,fato_voo_id_aeroporto_destino_not_null,n,t
+dw,dw.fato_voo,fato_voo_id_aeroporto_origem_not_null,n,t
+dw,dw.fato_voo,fato_voo_id_companhia_not_null,n,t
+dw,dw.fato_voo,fato_voo_id_equipamento_not_null,n,t
+dw,dw.fato_voo,fato_voo_id_justificativa_not_null,n,t
+dw,dw.fato_voo,fato_voo_id_raw_not_null,n,t
+dw,dw.fato_voo,fato_voo_id_tempo_chegada_not_null,n,t
+dw,dw.fato_voo,fato_voo_id_tempo_partida_not_null,n,t
+dw,dw.fato_voo,fato_voo_id_voo_not_null,n,t
+dw,dw.fato_voo,fato_voo_linha_origem_not_null,n,t
+dw,dw.fato_voo,fato_voo_numero_assentos_check,c,t
+dw,dw.fato_voo,fato_voo_partida_atipica_flag_not_null,n,t
+dw,dw.fato_voo,fato_voo_partida_prevista_not_null,n,t
+dw,dw.fato_voo,fato_voo_pipeline_not_null,n,t
+dw,dw.fato_voo,fato_voo_pkey,p,t
+dw,dw.fato_voo,fato_voo_quantidade_voos_check,c,t
+dw,dw.fato_voo,fato_voo_quantidade_voos_not_null,n,t
+dw,dw.fato_voo,fk_fato_aeroporto_destino,f,t
+dw,dw.fato_voo,fk_fato_aeroporto_origem,f,t
+dw,dw.fato_voo,fk_fato_companhia,f,t
+dw,dw.fato_voo,fk_fato_equipamento,f,t
+dw,dw.fato_voo,fk_fato_justificativa,f,t
+dw,dw.fato_voo,fk_fato_situacao,f,t
+dw,dw.fato_voo,fk_fato_tempo_chegada,f,t
+dw,dw.fato_voo,fk_fato_tempo_partida,f,t
+dw,dw.fato_voo,fk_fato_tipo_linha,f,t
+raw,raw.inventario,inventario_ano_origem_not_null,n,t
+raw,raw.inventario,inventario_arquivo_origem_not_null,n,t
+raw,raw.inventario,inventario_pkey,p,t
+raw,raw.voos_2019,voos_2019_Chegada Prevista_not_null,n,t
+raw,raw.voos_2019,voos_2019_Chegada Real_not_null,n,t
+raw,raw.voos_2019,voos_2019_Código DI_not_null,n,t
+raw,raw.voos_2019,voos_2019_Código Tipo Linha_not_null,n,t
+raw,raw.voos_2019,voos_2019_Descrição Aeroporto Destino_not_null,n,t
+raw,raw.voos_2019,voos_2019_Descrição Aeroporto Origem_not_null,n,t
+raw,raw.voos_2019,voos_2019_Empresa Aérea_not_null,n,t
+raw,raw.voos_2019,voos_2019_Justificativa_not_null,n,t
+raw,raw.voos_2019,voos_2019_Modelo Equipamento_not_null,n,t
+raw,raw.voos_2019,voos_2019_Número Voo_not_null,n,t
+raw,raw.voos_2019,voos_2019_Número de Assentos_not_null,n,t
+raw,raw.voos_2019,voos_2019_Partida Prevista_not_null,n,t
+raw,raw.voos_2019,voos_2019_Partida Real_not_null,n,t
+raw,raw.voos_2019,voos_2019_Referência_not_null,n,t
+raw,raw.voos_2019,voos_2019_Sigla ICAO Aeroporto Destino_not_null,n,t
+raw,raw.voos_2019,voos_2019_Sigla ICAO Aeroporto Origem_not_null,n,t
+raw,raw.voos_2019,voos_2019_Sigla ICAO Empresa Aérea_not_null,n,t
+raw,raw.voos_2019,voos_2019_Situação Chegada_not_null,n,t
+raw,raw.voos_2019,voos_2019_Situação Partida_not_null,n,t
+raw,raw.voos_2019,voos_2019_Situação Voo_not_null,n,t
+raw,raw.voos_2019,voos_2019_ano_origem_check,c,t
+raw,raw.voos_2019,voos_2019_ano_origem_id_raw_key,u,t
+raw,raw.voos_2019,voos_2019_ano_origem_not_null,n,t
+raw,raw.voos_2019,voos_2019_arquivo_origem_linha_origem_key,u,t
+raw,raw.voos_2019,voos_2019_arquivo_origem_not_null,n,t
+raw,raw.voos_2019,voos_2019_id_raw_not_null,n,t
+raw,raw.voos_2019,voos_2019_linha_origem_check,c,t
+raw,raw.voos_2019,voos_2019_linha_origem_not_null,n,t
+raw,raw.voos_2019,voos_2019_pkey,p,t
+raw,raw.voos_2020,voos_2020_Chegada Prevista_not_null,n,t
+raw,raw.voos_2020,voos_2020_Chegada Real_not_null,n,t
+raw,raw.voos_2020,voos_2020_Código DI_not_null,n,t
+raw,raw.voos_2020,voos_2020_Código Tipo Linha_not_null,n,t
+raw,raw.voos_2020,voos_2020_Descrição Aeroporto Destino_not_null,n,t
+raw,raw.voos_2020,voos_2020_Descrição Aeroporto Origem_not_null,n,t
+raw,raw.voos_2020,voos_2020_Empresa Aérea_not_null,n,t
+raw,raw.voos_2020,voos_2020_Justificativa_not_null,n,t
+raw,raw.voos_2020,voos_2020_Modelo Equipamento_not_null,n,t
+raw,raw.voos_2020,voos_2020_Número Voo_not_null,n,t
+raw,raw.voos_2020,voos_2020_Número de Assentos_not_null,n,t
+raw,raw.voos_2020,voos_2020_Partida Prevista_not_null,n,t
+raw,raw.voos_2020,voos_2020_Partida Real_not_null,n,t
+raw,raw.voos_2020,voos_2020_Referência_not_null,n,t
+raw,raw.voos_2020,voos_2020_Sigla ICAO Aeroporto Destino_not_null,n,t
+raw,raw.voos_2020,voos_2020_Sigla ICAO Aeroporto Origem_not_null,n,t
+raw,raw.voos_2020,voos_2020_Sigla ICAO Empresa Aérea_not_null,n,t
+raw,raw.voos_2020,voos_2020_Situação Chegada_not_null,n,t
+raw,raw.voos_2020,voos_2020_Situação Partida_not_null,n,t
+raw,raw.voos_2020,voos_2020_Situação Voo_not_null,n,t
+raw,raw.voos_2020,voos_2020_ano_origem_check,c,t
+raw,raw.voos_2020,voos_2020_ano_origem_id_raw_key,u,t
+raw,raw.voos_2020,voos_2020_ano_origem_not_null,n,t
+raw,raw.voos_2020,voos_2020_arquivo_origem_linha_origem_key,u,t
+raw,raw.voos_2020,voos_2020_arquivo_origem_not_null,n,t
+raw,raw.voos_2020,voos_2020_id_raw_not_null,n,t
+raw,raw.voos_2020,voos_2020_linha_origem_check,c,t
+raw,raw.voos_2020,voos_2020_linha_origem_not_null,n,t
+raw,raw.voos_2020,voos_2020_pkey,p,t
+raw,raw.ocorrencias,ocorrencias_ano_origem_arquivo_origem_linha_origem_key,u,t
+raw,raw.ocorrencias,ocorrencias_ano_origem_not_null,n,t
+raw,raw.ocorrencias,ocorrencias_arquivo_origem_not_null,n,t
+raw,raw.ocorrencias,ocorrencias_id_raw_not_null,n,t
+raw,raw.ocorrencias,ocorrencias_linha_origem_not_null,n,t
+raw,raw.ocorrencias,ocorrencias_pkey,p,t
+staging,staging.vra_rejeicoes_2019,vra_rejeicoes_2019_arquivo_origem_not_null,n,t
+staging,staging.vra_rejeicoes_2019,vra_rejeicoes_2019_linha_origem_not_null,n,t
+staging,staging.vra_rejeicoes_2019,vra_rejeicoes_2019_pkey,p,t
+staging,staging.vra_tratada_2019,vra_tratada_2019_arquivo_origem_not_null,n,t
+staging,staging.vra_tratada_2019,vra_tratada_2019_linha_origem_not_null,n,t
+staging,staging.vra_tratada_2019,vra_tratada_2019_pkey,p,t
+staging,staging.vra_rejeicoes_2020,vra_rejeicoes_2020_arquivo_origem_not_null,n,t
+staging,staging.vra_rejeicoes_2020,vra_rejeicoes_2020_linha_origem_not_null,n,t
+staging,staging.vra_rejeicoes_2020,vra_rejeicoes_2020_pkey,p,t
+staging,staging.vra_tratada_2020,vra_tratada_2020_arquivo_origem_not_null,n,t
+staging,staging.vra_tratada_2020,vra_tratada_2020_linha_origem_not_null,n,t
+staging,staging.vra_tratada_2020,vra_tratada_2020_pkey,p,t
+staging,staging.vra_duplicatas_excluidas,vra_duplicatas_excluidas_ano_origem_arquivo_origem_linha_or_key,u,t
+staging,staging.vra_duplicatas_excluidas,vra_duplicatas_excluidas_ano_origem_id_raw_fkey,f,t
+staging,staging.vra_duplicatas_excluidas,vra_duplicatas_excluidas_ano_origem_not_null,n,t
+staging,staging.vra_duplicatas_excluidas,vra_duplicatas_excluidas_arquivo_origem_not_null,n,t
+staging,staging.vra_duplicatas_excluidas,vra_duplicatas_excluidas_id_raw_not_null,n,t
+staging,staging.vra_duplicatas_excluidas,vra_duplicatas_excluidas_linha_origem_not_null,n,t
+staging,staging.vra_duplicatas_excluidas,vra_duplicatas_excluidas_ocorrencia_num_check,c,t
+staging,staging.vra_duplicatas_excluidas,vra_duplicatas_excluidas_pkey,p,t
+staging,staging.vra_rejeicoes,vra_rejeicoes_ano_origem_arquivo_origem_linha_origem_key,u,t
+staging,staging.vra_rejeicoes,vra_rejeicoes_ano_origem_id_raw_fkey,f,t
+staging,staging.vra_rejeicoes,vra_rejeicoes_ano_origem_not_null,n,t
+staging,staging.vra_rejeicoes,vra_rejeicoes_arquivo_origem_not_null,n,t
+staging,staging.vra_rejeicoes,vra_rejeicoes_id_raw_not_null,n,t
+staging,staging.vra_rejeicoes,vra_rejeicoes_linha_origem_not_null,n,t
+staging,staging.vra_rejeicoes,vra_rejeicoes_motivos_rejeicao_check,c,t
+staging,staging.vra_rejeicoes,vra_rejeicoes_motivos_rejeicao_not_null,n,t
+staging,staging.vra_rejeicoes,vra_rejeicoes_pkey,p,t
+staging,staging.vra_tratada,vra_tratada_aeroporto_destino_not_null,n,t
+staging,staging.vra_tratada,vra_tratada_aeroporto_origem_not_null,n,t
+staging,staging.vra_tratada,vra_tratada_ano_origem_arquivo_origem_linha_origem_key,u,t
+staging,staging.vra_tratada,vra_tratada_ano_origem_id_raw_fkey,f,t
+staging,staging.vra_tratada,vra_tratada_ano_origem_not_null,n,t
+staging,staging.vra_tratada,vra_tratada_arquivo_origem_not_null,n,t
+staging,staging.vra_tratada,vra_tratada_chegada_prevista_not_null,n,t
+staging,staging.vra_tratada,vra_tratada_companhia_icao_not_null,n,t
+staging,staging.vra_tratada,vra_tratada_id_raw_not_null,n,t
+staging,staging.vra_tratada,vra_tratada_linha_origem_not_null,n,t
+staging,staging.vra_tratada,vra_tratada_partida_prevista_not_null,n,t
+staging,staging.vra_tratada,vra_tratada_pkey,p,t
+staging,staging.resolucoes_aeroportos,resolucoes_aeroportos_aeroporto_icao_not_null,n,t
+staging,staging.resolucoes_aeroportos,resolucoes_aeroportos_descricao_original_not_null,n,t
+staging,staging.resolucoes_aeroportos,resolucoes_aeroportos_fonte_url_not_null,n,t
+staging,staging.resolucoes_aeroportos,resolucoes_aeroportos_justificativa_not_null,n,t
+staging,staging.resolucoes_aeroportos,resolucoes_aeroportos_pkey,p,t
+staging,staging.etl_comparar_2019,etl_comparar_2019_ano_origem_not_null,n,t
+staging,staging.etl_comparar_2019,etl_comparar_2019_arquivo_origem_not_null,n,t
+staging,staging.etl_comparar_2019,etl_comparar_2019_linha_origem_not_null,n,t
+staging,staging.etl_comparar_2019,etl_comparar_2019_pkey,p,t
+staging,staging.etl_comparar_2020,etl_comparar_2020_ano_origem_not_null,n,t
+staging,staging.etl_comparar_2020,etl_comparar_2020_arquivo_origem_not_null,n,t
+staging,staging.etl_comparar_2020,etl_comparar_2020_linha_origem_not_null,n,t
+staging,staging.etl_comparar_2020,etl_comparar_2020_pkey,p,t

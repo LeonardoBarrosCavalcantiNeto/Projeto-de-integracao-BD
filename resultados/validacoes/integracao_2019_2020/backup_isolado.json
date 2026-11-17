@@ -1,0 +1,12 @@
+{
+  "tipo": "backup_fisico_offline_cluster_isolado",
+  "banco_original_anac_dw_acessado": false,
+  "database": "postgres",
+  "pg_version": "18",
+  "arquivo": "/home/efsr/Documentos/3\u00b0 Semestre/Banco de dados/Projeto Integra\u00e7\u00e3o - ANAC/Reposit\u00f3rio/Projeto-de-integracao-BD/backups/isolado_2019_2020_20261117_155534_874204.tar.gz",
+  "sha256": "7a54d1d486cf6432c87cf034f375049ac99cd0249d8aa591d51ebbd44cdb92b7",
+  "bytes": 891923437,
+  "restaurado_em": "/home/efsr/Documentos/3\u00b0 Semestre/Banco de dados/Projeto Integra\u00e7\u00e3o - ANAC/Reposit\u00f3rio/Projeto-de-integracao-BD/.local/integracao/restauracao_20261117_155534_874204/postgres_teste",
+  "validacao_restauracao": "/home/efsr/Documentos/3\u00b0 Semestre/Banco de dados/Projeto Integra\u00e7\u00e3o - ANAC/Reposit\u00f3rio/Projeto-de-integracao-BD/backups/isolado_2019_2020_20261117_155534_874204_restauracao.log",
+  "restauracao_validada": true
+}

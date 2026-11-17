@@ -1,0 +1,12 @@
+{
+  "2019": {
+    "sha256_ingestao": "22777918e6f1ad639d908c63cc9430847ccd7b8186635268655c732a8f54ce32",
+    "sha256_reexportacao": "22777918e6f1ad639d908c63cc9430847ccd7b8186635268655c732a8f54ce32",
+    "iguais": true
+  },
+  "2020": {
+    "sha256_ingestao": "a5b2b7e5b7a666e1b534637e208f557e7bbd9c0518380ac441520beb95c35631",
+    "sha256_reexportacao": "a5b2b7e5b7a666e1b534637e208f557e7bbd9c0518380ac441520beb95c35631",
+    "iguais": true
+  }
+}

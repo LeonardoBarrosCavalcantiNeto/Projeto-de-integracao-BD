@@ -1,3 +1,5 @@
+> Execução integrada de 2019/2020: consulte [README principal](../../README.md) e [arquitetura canônica](../../documentacao/integracao_2019_2020.md). Este documento descreve o experimento histórico preservado; suas limitações não descrevem a carga canônica nova.
+
 # ELT VRA no PostgreSQL / DataGrip
 
 Organização dos pacotes de 2019 na branch `integracao-elt`. Este guia prevalece sobre os caminhos e o estado histórico descritos nos READMEs originais copiados em `2019/`. Nenhum SQL foi executado nesta organização.
