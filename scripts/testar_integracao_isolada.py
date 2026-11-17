@@ -28,15 +28,26 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bundle',type=Path,default=ROOT/'.local/integracao/bundle')
     parser.add_argument('--cluster',type=Path,default=ROOT/'.local/integracao/postgres_teste')
+    parser.add_argument('--manual',action='store_true',help='Executar cada etapa gerada para DataGrip separadamente')
     args=parser.parse_args()
     cluster=args.cluster.resolve(); bundle=args.bundle.resolve()
     if cluster.exists():
         raise ValueError('Cluster deve ser novo. Para consultas posteriores, usar executar().')
     cluster.parent.mkdir(parents=True,exist_ok=True)
     subprocess.run(['initdb','-D',str(cluster),'-A','trust','--no-locale','-E','UTF8'],check=True,capture_output=True)
-    sql=(bundle/'carga.sql').read_text()
-    sql=re.sub(r'^\\copy (.*)$',r'COPY \1;',sql,flags=re.M)
-    executar(cluster,sql,bundle/'postgres_carga.log')
+    if args.manual:
+        files=sorted((bundle/'manual').glob('*'))
+        if len(files)!=11:
+            raise ValueError('Execute prepare para gerar as 11 etapas manuais')
+        for file in files:
+            sql=file.read_text()
+            sql=re.sub(r'^\\copy (.*)$',r'COPY \1;',sql,flags=re.M)
+            executar(cluster,sql,bundle/f'manual_{file.stem}.log')
+            print('Etapa manual validada:',file.name,flush=True)
+    else:
+        sql=(bundle/'carga.sql').read_text()
+        sql=re.sub(r'^\\copy (.*)$',r'COPY \1;',sql,flags=re.M)
+        executar(cluster,sql,bundle/'postgres_carga.log')
     rerun='BEGIN;\n'+(ROOT/'sql/integracao/03_carga_dw.sql').read_text()+'\n'+(ROOT/'sql/integracao/04_validar.sql').read_text()+'\nCOMMIT;'
     executar(cluster,rerun,bundle/'postgres_reexecucao.log')
     for name in ['05_analises']:

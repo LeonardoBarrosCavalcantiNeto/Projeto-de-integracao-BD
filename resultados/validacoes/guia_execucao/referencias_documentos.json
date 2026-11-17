@@ -1,0 +1,18 @@
+{
+  "documentos": {
+    "GUIA_EXECUCAO_COMPLETA": {
+      "referencias_versionadas": 14,
+      "blocos_bash": 33,
+      "arquivos_gerados_referenciados": 1,
+      "ausentes": []
+    },
+    "ORDEM_DOS_SCRIPTS": {
+      "referencias_versionadas": 8,
+      "blocos_bash": 2,
+      "arquivos_gerados_referenciados": 11,
+      "ausentes": []
+    }
+  },
+  "erros": [],
+  "hashes_conferidos": 14
+}

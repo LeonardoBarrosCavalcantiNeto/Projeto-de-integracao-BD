@@ -38,6 +38,12 @@ class PipelinePostgreSQL(unittest.TestCase):
             if result.returncode:
                 logs='\n'.join(f.read_text()[-5000:] for f in (base/'bundle').glob('postgres*.log'))
                 self.fail(result.stdout+result.stderr+logs)
+            manual=subprocess.run([sys.executable,str(ROOT/'scripts/testar_integracao_isolada.py'),
+                                   '--bundle',str(base/'bundle'),'--cluster',str(base/'postgres_manual'),'--manual'],
+                                  text=True,capture_output=True)
+            if manual.returncode:
+                logs='\n'.join(f.read_text()[-5000:] for f in (base/'bundle').glob('manual*.log'))
+                self.fail(manual.stdout+manual.stderr+logs)
             exported=base/'result.csv'
             query=f'''COPY (SELECT ano_origem,count(*),count(atraso_partida_min),
             count(*) FILTER(WHERE diferenca_partida_min=-15 AND atraso_partida_min=0),
@@ -46,6 +52,9 @@ class PipelinePostgreSQL(unittest.TestCase):
             TO {literal(exported)} WITH (FORMAT CSV);'''
             executar(base/'postgres',query,base/'conferencia.log')
             with exported.open() as h:rows=list(csv.reader(h))
+            executar(base/'postgres_manual',query,base/'conferencia_manual.log')
+            with exported.open() as h:manual_rows=list(csv.reader(h))
+            self.assertEqual(rows,manual_rows)
             self.assertEqual(rows,[['2019','3','2','2','2','2'],['2020','3','2','2','2','2']])
 
 if __name__=='__main__':unittest.main()

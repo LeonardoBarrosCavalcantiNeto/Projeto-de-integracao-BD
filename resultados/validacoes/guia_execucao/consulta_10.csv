@@ -1,0 +1,11 @@
+tabela,conname,convalidated
+dw.fato_voo,fato_voo_ano_origem_id_raw_fkey,t
+dw.fato_voo,fk_fato_aeroporto_destino,t
+dw.fato_voo,fk_fato_aeroporto_origem,t
+dw.fato_voo,fk_fato_companhia,t
+dw.fato_voo,fk_fato_equipamento,t
+dw.fato_voo,fk_fato_justificativa,t
+dw.fato_voo,fk_fato_situacao,t
+dw.fato_voo,fk_fato_tempo_chegada,t
+dw.fato_voo,fk_fato_tempo_partida,t
+dw.fato_voo,fk_fato_tipo_linha,t

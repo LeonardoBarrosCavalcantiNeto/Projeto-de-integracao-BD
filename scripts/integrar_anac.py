@@ -11,6 +11,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -43,11 +44,15 @@ def preparar(inputs, output):
     statements = ['BEGIN;', "SELECT pg_advisory_xact_lock(20192020);",
                   'CREATE SCHEMA raw;', 'CREATE SCHEMA staging;', 'CREATE SCHEMA dw;',
                   'CREATE TABLE raw.inventario (ano_origem integer, arquivo_origem text, registros bigint, bytes bigint, sha256 text, PRIMARY KEY(ano_origem,arquivo_origem));']
+    manual_raw = list(statements[2:])
+    manual_imports = []
+    manual_transforms = {}
     for year, directory in sorted(inputs.items()):
         files = sorted(Path(directory).glob('*.csv'))
         expected = [f'VRA_{year}_{month:02d}.csv' for month in range(1, 13)]
         if [f.name for f in files] != expected:
             raise ValueError(f'{year}: esperados exatamente os 12 CSVs mensais: {expected}')
+        inventory_start = len(statements)
         raw_csv = output / f'raw_{year}.csv'
         raw_id = 0
         with raw_csv.open('w', encoding='utf-8', newline='') as target:
@@ -79,6 +84,8 @@ def preparar(inputs, output):
         columns = ','.join(identifier(c) + ' TEXT NOT NULL' for c in ORIGINAIS)
         statements += [f'CREATE TABLE raw.voos_{year} (id_raw BIGINT PRIMARY KEY,{columns}, arquivo_origem TEXT NOT NULL, linha_origem BIGINT NOT NULL CHECK(linha_origem>=2), ano_origem INTEGER NOT NULL CHECK(ano_origem={year}), UNIQUE(ano_origem,id_raw), UNIQUE(arquivo_origem,linha_origem));',
                        f"\\copy raw.voos_{year} FROM {literal(raw_csv)} WITH (FORMAT CSV, NULL '\\N')"]
+        manual_raw.extend(statements[inventory_start:-1])
+        manual_imports.append(statements[-1])
         template = (ROOT/'sql/transformacoes/elt_2020.sql').read_text()
         template = template.replace('elt_2020.', 'staging.').replace('2020', str(year))
         template = template.replace('arquivo_origem, linha_origem, '+str(year)+'::INTEGER AS ano_origem', 'id_raw, arquivo_origem, linha_origem, '+str(year)+'::INTEGER AS ano_origem')
@@ -90,6 +97,8 @@ def preparar(inputs, output):
             template = template.replace('staging.'+table, f'staging.{table}_{year}')
         statements.append(template)
         statements.append(f'CREATE VIEW staging.vra_{year} AS SELECT * FROM staging.vra_convertida_{year};')
+        manual_transforms[year] = template + f'\nCREATE VIEW staging.vra_{year} AS SELECT * FROM staging.vra_convertida_{year};'
+    consolidation_start = len(statements)
     years = sorted(inputs)
     for table in ['vra_duplicatas_excluidas', 'vra_rejeicoes', 'vra_tratada', 'vra_anomalias']:
         statements.append('CREATE TABLE staging.'+table+' AS '+' UNION ALL '.join(f'SELECT '+('*, '+str(y)+'::integer AS ano_origem' if table=='vra_anomalias' else '*')+f' FROM staging.{table}_{y}' for y in years)+';')
@@ -103,11 +112,14 @@ def preparar(inputs, output):
         statements.append(f'INSERT INTO raw.ocorrencias SELECT ano_origem,id_raw,arquivo_origem,linha_origem FROM raw.voos_{year};')
     for table in ['vra_duplicatas_excluidas','vra_rejeicoes','vra_tratada']:
         statements.append(f'ALTER TABLE staging.{table} ADD FOREIGN KEY(ano_origem,id_raw) REFERENCES raw.ocorrencias;')
+    manual_consolidation = statements[consolidation_start:]
+    dw_start = len(statements)
     ddl = (ROOT/'sql/database/10_criacao_dw.sql').read_text().replace('id_raw BIGINT NOT NULL UNIQUE', 'id_raw BIGINT NOT NULL')
     ddl = ddl.replace('arquivo_origem TEXT,', 'arquivo_origem TEXT NOT NULL,').replace('linha_origem BIGINT,','linha_origem BIGINT NOT NULL,')
     statements += [ddl, 'ALTER TABLE dw.fato_voo ADD UNIQUE(ano_origem,id_raw);',
                    'ALTER TABLE dw.fato_voo ADD UNIQUE(ano_origem,arquivo_origem,linha_origem);',
                    'ALTER TABLE dw.fato_voo ADD FOREIGN KEY(ano_origem,id_raw) REFERENCES staging.vra_tratada;']
+    manual_dw = statements[dw_start:]
     statements.append((ROOT/'sql/integracao/02_dimensoes.sql').read_text())
     statements.append((ROOT/'sql/integracao/03_carga_dw.sql').read_text())
     statements.append((ROOT/'sql/integracao/04_validar.sql').read_text())
@@ -115,11 +127,42 @@ def preparar(inputs, output):
     statements.append((ROOT/'sql/integracao/08_restricoes.sql').read_text())
     statements.append('COMMIT;')
     (output/'carga.sql').write_text('\n'.join(statements), encoding='utf-8')
+    gerar_manual(output, manual_raw, manual_imports, manual_transforms, manual_consolidation, manual_dw)
+    manifest['manual_sha256'] = {f.name: sha256_file(f) for f in sorted((output/'manual').iterdir()) if f.is_file()}
     manifest['fontes_codigo_sha256'] = {str(f.relative_to(ROOT)): sha256_file(f) for f in [Path(__file__), ROOT/'sql/transformacoes/elt_2020.sql', ROOT/'sql/database/10_criacao_dw.sql', *sorted((ROOT/'sql/integracao').glob('*.sql'))]}
     manifest['bundle_sha256'] = hashlib.sha256((output/'carga.sql').read_bytes()).hexdigest()
     manifest['raw_sha256'] = {f.name: sha256_file(f) for f in output.glob('raw_*.csv')}
     (output/'manifesto.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n')
     return output
+
+
+def gerar_manual(output, raw, imports, transforms, consolidation, dw):
+    """Mesmos blocos do bundle; SQL puro para DataGrip e importação via psql.
+
+    Somente instalação limpa: CREATE SCHEMA é intencionalmente sem IF NOT EXISTS.
+    Cada etapa SQL tem transação própria; erro deve ser seguido de ROLLBACK.
+    """
+    folder = output/'manual'
+    folder.mkdir(exist_ok=True)
+    def save(name, body, transaction=True):
+        if isinstance(body, list):
+            body = '\n'.join(body)
+        header = '-- GERADO por integrar_anac.py prepare. Instalação limpa; não usar para migração.\n'
+        if transaction:
+            body = 'BEGIN;\n'+body+'\nCOMMIT;'
+        (folder/name).write_text(header+body+'\n',encoding='utf-8')
+    save('01_raw.sql', raw)
+    guard = "DO $$ BEGIN IF EXISTS(SELECT FROM raw.voos_2019) OR EXISTS(SELECT FROM raw.voos_2020) THEN RAISE EXCEPTION 'RAW não vazia: importação repetida bloqueada'; END IF; END $$;"
+    save('02_importar_raw.psql', [guard]+imports)
+    for step,year in [(3,2019),(4,2020)]:
+        save(f'{step:02d}_transformar_{year}.sql',transforms[year])
+    save('05_consolidar_staging.sql',consolidation)
+    save('06_criar_dw.sql',dw)
+    for number, target, source in [(7,'dimensoes','02_dimensoes'),(8,'carga_dw','03_carga_dw')]:
+        save(f'{number:02d}_{target}.sql',(ROOT/f'sql/integracao/{source}.sql').read_text())
+    save('09_validar_contrato.sql',[(ROOT/f'sql/integracao/{name}.sql').read_text() for name in ['04_validar','06_casos_limite','08_restricoes']])
+    save('10_analises.sql',(ROOT/'sql/integracao/05_analises.sql').read_text(),False)
+    save('11_diagnosticos.sql',(ROOT/'sql/integracao/07_diagnosticos.sql').read_text(),False)
 
 
 def psql(query=None, file=None, database=None):
@@ -224,4 +267,11 @@ def main():
         aplicar(args.bundle,args.backup_dir)
 
 if __name__=='__main__':
-    main()
+    try:
+        main()
+    except subprocess.CalledProcessError as error:
+        # Os clientes recebem credenciais por ambiente, nunca na linha de comando.
+        if error.stderr:
+            detail = error.stderr.decode(errors='replace') if isinstance(error.stderr, bytes) else error.stderr
+            print(detail, file=sys.stderr, end='')
+        raise SystemExit(f'Falha na ferramenta {error.cmd[0]}; nenhuma etapa posterior foi executada.')

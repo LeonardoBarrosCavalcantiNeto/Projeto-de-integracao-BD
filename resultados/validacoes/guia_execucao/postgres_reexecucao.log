@@ -1,0 +1,47 @@
+
+PostgreSQL stand-alone backend 18.6
+backend> 	 1: ano_origem	(typeid = 23, len = 4, typmod = -1, byval = t)
+	 2: bruta	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 3: duplicatas_excedentes	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 4: rejeicoes	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 5: tratada	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 6: partidas_atipicas	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 7: chegadas_atipicas	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 8: partidas_reais_nulas	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 9: chegadas_reais_nulas	(typeid = 20, len = 8, typmod = -1, byval = t)
+	----
+	 1: ano_origem = "2019"	(typeid = 23, len = 4, typmod = -1, byval = t)
+	 2: bruta = "983414"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 3: duplicatas_excedentes = "470"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 4: rejeicoes = "18"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 5: tratada = "982926"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 6: partidas_atipicas = "684"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 7: chegadas_atipicas = "690"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 8: partidas_reais_nulas = "17982"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 9: chegadas_reais_nulas = "17982"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	----
+	 1: ano_origem = "2020"	(typeid = 23, len = 4, typmod = -1, byval = t)
+	 2: bruta = "483545"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 3: duplicatas_excedentes = "124"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 4: rejeicoes = "1512"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 5: tratada = "481909"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 6: partidas_atipicas = "286"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 7: chegadas_atipicas = "331"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 8: partidas_reais_nulas = "21845"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	 9: chegadas_reais_nulas = "21845"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	----
+	 1: ano_origem	(typeid = 23, len = 4, typmod = -1, byval = t)
+	 2: fato	(typeid = 20, len = 8, typmod = -1, byval = t)
+	----
+	 1: ano_origem = "2019"	(typeid = 23, len = 4, typmod = -1, byval = t)
+	 2: fato = "982926"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	----
+	 1: ano_origem = "2020"	(typeid = 23, len = 4, typmod = -1, byval = t)
+	 2: fato = "481909"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	----
+	 1: total_fato	(typeid = 20, len = 8, typmod = -1, byval = t)
+	----
+	 1: total_fato = "1464835"	(typeid = 20, len = 8, typmod = -1, byval = t)
+	----
+backend> 2026-11-17 13:29:54.758 -03 [44] LOG:  checkpoint starting: shutdown immediate
+2026-11-17 13:29:54.765 -03 [44] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 3 SLRU buffers; 0 WAL file(s) added, 1 removed, 0 recycled; write=0.002 s, sync=0.002 s, total=0.009 s; sync files=19, longest=0.001 s, average=0.001 s; distance=4657 kB, estimate=4657 kB; lsn=1/D91432B8, redo lsn=1/D91432B8

@@ -4,6 +4,13 @@ Projeto universitário de Banco de Dados. A implementação integrada lê os 24 
 
 A execução principal é `scripts/integrar_anac.py`. Os notebooks e scripts dos integrantes foram preservados como implementações experimentais e referências de comparação. Os scripts históricos de `sql/elt/2019/` não são pré-requisito da nova execução.
 
+## Manual do zero
+
+- [Guia completo Fedora, PostgreSQL, DataGrip, execução e recuperação](documentacao/GUIA_EXECUCAO_COMPLETA.md).
+- [Ordem rápida dos scripts e etapas manuais geradas](documentacao/ORDEM_DOS_SCRIPTS.md).
+
+`prepare` também gera `.local/integracao/bundle/manual/`: importação pelo terminal e tratamento/DW por etapas SQL no DataGrip. Consulte o guia antes de escolher execução automatizada ou manual.
+
 ## Execução
 
 Requisitos: Python 3.11+ e ferramentas PostgreSQL (`psql`, `pg_dump`, `pg_restore`, `createdb`) compatíveis com a versão do servidor. A integração usa apenas a biblioteca padrão Python. As comparações com ETL usam as dependências de `requirements.txt`.

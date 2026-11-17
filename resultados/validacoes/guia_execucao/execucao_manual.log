@@ -1,0 +1,12 @@
+Etapa manual validada: 01_raw.sql
+Etapa manual validada: 02_importar_raw.psql
+Etapa manual validada: 03_transformar_2019.sql
+Etapa manual validada: 04_transformar_2020.sql
+Etapa manual validada: 05_consolidar_staging.sql
+Etapa manual validada: 06_criar_dw.sql
+Etapa manual validada: 07_dimensoes.sql
+Etapa manual validada: 08_carga_dw.sql
+Etapa manual validada: 09_validar_contrato.sql
+Etapa manual validada: 10_analises.sql
+Etapa manual validada: 11_diagnosticos.sql
+Integração e reexecução validadas em /home/efsr/Documentos/3° Semestre/Banco de dados/Projeto Integração - ANAC/Repositório/Projeto-de-integracao-BD/.local/guia_validacao/postgres_manual. Logs em /home/efsr/Documentos/3° Semestre/Banco de dados/Projeto Integração - ANAC/Repositório/Projeto-de-integracao-BD/.local/guia_validacao/bundle
