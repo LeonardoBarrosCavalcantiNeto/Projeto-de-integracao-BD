@@ -1,0 +1,51 @@
+{
+  "autor": "Arthur",
+  "pipeline": "ETL",
+  "ano_origem": 2021,
+  "versao_contrato": "1.1",
+  "inicio_utc": "2026-11-17T12:38:09.136779+00:00",
+  "fim_utc": "2026-11-17T12:38:51.957441+00:00",
+  "python": "3.12.3",
+  "pandas": "2.3.3",
+  "transformacoes": "Python/Pandas antes da carga",
+  "resumo": {
+    "ano_origem": 2021,
+    "bruta": 632148,
+    "duplicatas_excedentes": 0,
+    "intersecao_excedentes_duplicados_invalidos": 0,
+    "rejeicoes": 25511,
+    "tratada": 606637,
+    "grupos_duplicados": 0,
+    "registros_envolvidos_duplicatas": 0,
+    "duplicatas_apos_trim_upper": 0,
+    "duplicatas_apos_padronizacao": 0,
+    "partidas_atipicas": 371,
+    "chegadas_atipicas": 373,
+    "partidas_reais_nulas": 26139,
+    "chegadas_reais_nulas": 26141,
+    "ocorrencias_anomalias": 0,
+    "partidas_previstas_fora_do_ano": 15,
+    "codigos_com_conflito": 9,
+    "arquivos_com_codeshare": 7,
+    "codeshare_preenchido": 112479,
+    "executado_em": "2026-11-17T12:38:35.487138+00:00"
+  },
+  "csvs_originais_intactos": true,
+  "comparacao_elt": "Totais informados e inventários conferidos; 12 hashes iguais. Valores por registro pendentes.",
+  "carga_postgresql": {
+    "status": "nao_executada",
+    "schema": "etl_2021",
+    "execucao_id": "2026-11-17T12:38:09.136779+00:00",
+    "transacao_confirmada": false,
+    "atualizado_em_utc": "2026-11-17T12:38:51.957441+00:00"
+  },
+  "modelagem_dimensional": "Pendente da integração do grupo.",
+  "status_execucao": "concluida",
+  "verificacao_elt_posterior": {
+    "verificado_em_utc": "2026-11-17T15:42:33.835428+00:00",
+    "commit_elt": "b6c6b463e0eadb76be86a72415d3eb288610d0d0",
+    "inventarios": "equivalentes",
+    "comparacao_por_registro": "pendente",
+    "evidencia": "resultados/validacoes/comparacao_etl_elt_2021.json"
+  }
+}
