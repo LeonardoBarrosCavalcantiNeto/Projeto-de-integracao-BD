@@ -294,13 +294,6 @@ def exigir(condicao, mensagem):
 def carregar_postgresql(tabelas, *, schema="etl_2021", replace=False):
     """Carrega saídas já tratadas em uma transação; não transforma os dados."""
     project_dir = Path(__file__).resolve().parents[1]
-    df_tratada = tabelas["vra_tratada"]
-    df_rejeicoes = tabelas["vra_rejeicoes"]
-    df_duplicatas = tabelas["vra_duplicatas_excluidas"]
-    vra_anomalias = tabelas["vra_anomalias"]
-    vra_conflitos_codigo = tabelas["vra_conflitos_codigo"]
-    inventario = tabelas["inventario_arquivos"]
-    resumo_qualidade = tabelas["resumo_qualidade"]
     import os
     from dotenv import load_dotenv
     from sqlalchemy import create_engine, text
@@ -325,42 +318,38 @@ def carregar_postgresql(tabelas, *, schema="etl_2021", replace=False):
             port=int(os.getenv("PGPORT", "5432")), database=os.getenv("PGDATABASE"),
         )
     engine = create_engine(url, echo=False, hide_parameters=True)
-    tipos_tratada = {campo: sat.Text() for campo in df_tratada.columns}
-    for campo in ["partida_prevista", "partida_real", "chegada_prevista", "chegada_real"]:
-        tipos_tratada[campo] = sat.DateTime(timezone=False)
-    tipos_tratada["referencia"] = sat.Date()
-    for campo in ["linha_origem", "ano_origem", "numero_assentos"]:
-        tipos_tratada[campo] = sat.Integer()
-    for campo in ["diferenca_partida_min", "diferenca_chegada_min", "atraso_partida_min", "atraso_chegada_min"]:
-        tipos_tratada[campo] = sat.Numeric(16, 2)
-    for campo in ["partida_atipica_flag", "chegada_atipica_flag"]:
-        tipos_tratada[campo] = sat.Boolean()
-
-    def tipos_auditoria_bruta(base):
+    def tipos_base(base):
         tipos = {campo: sat.Text() for campo in base.columns}
-        for campo in ["ano_origem", "linha_origem", "linha_preservada"]:
+        for campo in ["partida_prevista", "partida_real", "chegada_prevista", "chegada_real"]:
             if campo in tipos:
-                tipos[campo] = sat.Integer()
-        if "codeshare_presente_no_arquivo" in tipos:
-            tipos["codeshare_presente_no_arquivo"] = sat.Boolean()
-        if "motivos_rejeicao" in tipos:
-            tipos["motivos_rejeicao"] = ARRAY(sat.Text())
+                tipos[campo] = sat.DateTime(timezone=False)
+        if "referencia" in tipos:
+            tipos["referencia"] = sat.Date()
+        if "data_carga" in tipos:
+            tipos["data_carga"] = sat.DateTime(timezone=True)
+        inteiros = {"linha_origem", "ano_origem", "linha_preservada", "numero_assentos", "mes",
+                    "bytes", "colunas_originais", "registros_csv", "registros_pandas", "ocorrencias",
+                    "quantidade_ocorrencias", "bruta", "duplicatas", "rejeicoes", "tratada",
+                    "ocorrencias_anomalias", "excedentes_invalidos"}
+        booleanos = {"codeshare_presente_no_arquivo", "invalido_diagnostico", "conciliada",
+                     "copia_bruta_verificada", "partida_ano_diverge_flag",
+                     "partida_atipica_flag", "chegada_atipica_flag"}
+        for campo in base.columns:
+            if campo in inteiros or (base[campo].dtype.kind in "iu" and campo not in colunas_canonicas):
+                tipos[campo] = sat.BigInteger()
+            if campo in booleanos or base[campo].dtype.kind == "b":
+                tipos[campo] = sat.Boolean()
+            if campo in {"diferenca_partida_min", "diferenca_chegada_min", "atraso_partida_min", "atraso_chegada_min"}:
+                tipos[campo] = sat.Numeric(16, 2)
+            if campo in {"motivo_rejeicao", "motivo_rejeicao_diagnostico"}:
+                tipos[campo] = ARRAY(sat.Text())
         return tipos
 
-    tabelas_carga = {
-        "vra_tratada": (df_tratada, tipos_tratada),
-        "vra_rejeicoes": (df_rejeicoes, tipos_auditoria_bruta(df_rejeicoes)),
-        "vra_duplicatas_excluidas": (df_duplicatas, tipos_auditoria_bruta(df_duplicatas)),
-        "vra_anomalias": (vra_anomalias, {
-            "arquivo_origem": sat.Text(), "linha_origem": sat.Integer(), "ano_origem": sat.Integer(),
-            "campo": sat.Text(), "valor_original": sat.Text(), "motivo": sat.Text(),
-        }),
-        "vra_conflitos_codigo": (vra_conflitos_codigo, {
-            "tipo": sat.Text(), "codigo": sat.Text(), "descricao": sat.Text(), "ocorrencias": sat.BigInteger(),
-        }),
-        "inventario_arquivos": (inventario, None),
-        "resumo_qualidade": (resumo_qualidade, None),
-    }
+    tabelas_carga = {nome: (base, tipos_base(base)) for nome, base in tabelas.items()}
+    permitidas = {"vra_bruta", "vra_tratada", "vra_rejeicoes", "vra_duplicatas_excluidas",
+                  "vra_anomalias", "vra_conflitos_codigo", "inventario_arquivos", "resumo_qualidade",
+                  "vra_possiveis_duplicatas_padronizacao", "etl_log_arquivos"}
+    exigir(set(tabelas_carga) == permitidas, "Conjunto inesperado de tabelas para a carga.")
     nomes_tabelas = list(tabelas_carga)
     try:
         with engine.begin() as conexao:
@@ -380,13 +369,18 @@ def carregar_postgresql(tabelas, *, schema="etl_2021", replace=False):
                     f'SELECT COUNT(*) FROM "{schema}"."{nome}"'
                 )).scalar_one()
                 exigir(quantidade == len(base), f"Contagem incorreta após carregar {nome}.")
-            for nome in ["vra_tratada", "vra_rejeicoes", "vra_duplicatas_excluidas"]:
+            for nome in ["vra_bruta", "vra_tratada", "vra_rejeicoes", "vra_duplicatas_excluidas",
+                         "vra_possiveis_duplicatas_padronizacao"]:
                 conexao.execute(text(
                     f'ALTER TABLE "{schema}"."{nome}" '
                     'ADD PRIMARY KEY (arquivo_origem, linha_origem)'
                 ))
+            conexao.execute(text(
+                f'ALTER TABLE "{schema}"."etl_log_arquivos" ADD PRIMARY KEY (arquivo_origem)'
+            ))
+        # Este ponto só é alcançado depois do COMMIT de engine.begin().
         status_carga_postgresql = {
-            "status": "concluida", "schema": schema,
+            "status": "concluida", "schema": schema, "transacao_confirmada": True,
             "contagens": {nome: len(base) for nome, (base, _) in tabelas_carga.items()},
         }
         print("Carga e contagens PostgreSQL concluídas no schema", schema)
@@ -395,8 +389,8 @@ def carregar_postgresql(tabelas, *, schema="etl_2021", replace=False):
     return status_carga_postgresql
 
 
-def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
-            schema="etl_2021", export_raw=False):
+def _executar_etl(input_dir, output_dir, *, load_database=False, replace=False,
+                  schema="etl_2021", export_raw=False, inicio_execucao=None):
     """Executa 2021 e retorna resumo, status da carga e caminhos das evidências.
 
     A carga é opcional e a substituição de tabelas precisa ser explícita.
@@ -407,7 +401,7 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
     EXPORTAR_EVIDENCIAS = True
     EXPORTAR_BASE_BRUTA = export_raw
     SCHEMA_ETL = schema
-    inicio_execucao = datetime.now(timezone.utc).isoformat()
+    inicio_execucao = inicio_execucao or datetime.now(timezone.utc).isoformat()
     arquivos = [pasta_dados / f"VRA_2021_{mes:02d}.csv" for mes in range(1, 13)]
     faltantes = [arquivo.name for arquivo in arquivos if not arquivo.is_file()]
     if faltantes:
@@ -884,7 +878,13 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
 
     status_carga_postgresql = {"status": "nao_executada", "schema": schema}
     if load_database:
+        (PASTA_SAIDA / "status_carga_postgresql.json").write_text(json.dumps({
+            "status": "em_execucao", "schema": schema, "execucao_id": inicio_execucao,
+        }, indent=2), encoding="utf-8")
         status_carga_postgresql = carregar_postgresql({
+            "vra_bruta": df_bruta,
+            "vra_possiveis_duplicatas_padronizacao": duplicatas_pos_trim_upper,
+            "etl_log_arquivos": etl_log_arquivos,
             "vra_tratada": df_tratada,
             "vra_rejeicoes": df_rejeicoes,
             "vra_duplicatas_excluidas": df_duplicatas,
@@ -904,6 +904,48 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
         "pasta_saida": str(PASTA_SAIDA),
         "arquivos": sorted(p.name for p in PASTA_SAIDA.iterdir() if p.is_file()),
     }
+
+def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
+            schema="etl_2021", export_raw=False):
+    """Executa o ETL e registra o status desta execução, inclusive em caso de falha."""
+    exigir(not replace or load_database, "replace=True exige load_database=True.")
+    exigir(schema == "etl_2021", "Este pipeline usa somente o schema etl_2021.")
+    pasta = Path(output_dir).resolve()
+    pasta.mkdir(parents=True, exist_ok=True)
+    inicio = datetime.now(timezone.utc).isoformat()
+    status = {"status": "pendente" if load_database else "nao_executada",
+              "schema": schema, "execucao_id": inicio, "transacao_confirmada": False}
+    caminho_status = pasta / "status_carga_postgresql.json"
+    caminho_meta = pasta / "metadados_execucao.json"
+
+    def registrar(estado, erro_tipo=None):
+        status["atualizado_em_utc"] = datetime.now(timezone.utc).isoformat()
+        caminho_status.write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+        meta = json.loads(caminho_meta.read_text()) if caminho_meta.exists() else {}
+        if meta.get("inicio_utc") != inicio:
+            meta = {"pipeline": "ETL", "ano_origem": 2021, "versao_contrato": "1.1", "inicio_utc": inicio}
+        meta.update(status_execucao=estado, carga_postgresql=status, fim_utc=status["atualizado_em_utc"])
+        if erro_tipo:
+            meta["erro_tipo"] = erro_tipo
+        caminho_meta.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    registrar("em_execucao")
+    try:
+        resultado = _executar_etl(input_dir, output_dir, load_database=load_database,
+                                 replace=replace, schema=schema, export_raw=export_raw,
+                                 inicio_execucao=inicio)
+    except Exception as erro:
+        atual = json.loads(caminho_status.read_text())
+        status["status"] = ("falhou" if atual["status"] == "em_execucao" else
+                            "nao_iniciada" if load_database else "nao_executada")
+        status["erro_tipo"] = type(erro).__name__  # Não serializar mensagens/credenciais da conexão.
+        registrar("falhou", type(erro).__name__)
+        raise
+    status.update(resultado["carga_postgresql"])
+    registrar("concluida")
+    resultado["carga_postgresql"] = status
+    return resultado
+
 
 def main():
     parser = argparse.ArgumentParser(description="ETL de 2021 com tratamento em Python/Pandas.")
