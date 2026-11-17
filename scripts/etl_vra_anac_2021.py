@@ -76,7 +76,8 @@ mapa_colunas = {
 
 colunas_canonicas = list(mapa_colunas.values())
 
-metadados = ["arquivo_origem", "linha_origem", "ano_origem"]
+metadados = ["arquivo_origem", "linha_origem", "ano_origem",
+             "data_carga", "pipeline", "versao_contrato"]
 
 campos_maiusculos = [
     "companhia_icao", "codigo_di", "tipo_linha", "modelo_equipamento",
@@ -214,32 +215,43 @@ def motivos_obrigatorios(textos, convertida):
     for motivo, mascara in regras.items():
         for posicao in np.flatnonzero(mascara.to_numpy(dtype=bool)):
             motivos[posicao].append(motivo)
-    return pd.Series(motivos, index=convertida.index, name="motivos_rejeicao")
+    return pd.Series(motivos, index=convertida.index, name="motivo_rejeicao", dtype=object)
+
+def com_originais(convertida, bruta):
+    """Anexa o retrato bruto com nomes canônicos prefixados; não altera a entrada."""
+    campos = colunas_comuns + [c for c in ["Codeshare", "codeshare_presente_no_arquivo"] if c in bruta]
+    originais = bruta[campos].rename(columns={
+        c: "bruto__" + mapa_colunas.get(c, "codeshare" if c == "Codeshare" else c)
+        for c in campos
+    })
+    return pd.concat([convertida, originais], axis=1)
+
 
 def auditar_opcionais(bruta, textos, convertida):
     partes_anomalias = []
+    retrato = com_originais(convertida, bruta)
     for original, canonico in [
-        ("Partida Real", "partida_real"),
-        ("Chegada Real", "chegada_real"),
-        ("Número de Assentos", "numero_assentos"),
-        ("Referência", "referencia"),
+        ("Partida Real", "partida_real"), ("Chegada Real", "chegada_real"),
+        ("Número de Assentos", "numero_assentos"), ("Referência", "referencia"),
     ]:
         mascara = textos[canonico].notna() & convertida[canonico].isna()
-        ocorrencias = bruta.loc[mascara, metadados].copy()
-        ocorrencias["campo"] = original
+        ocorrencias = pd.DataFrame(index=retrato.index[mascara])
+        ocorrencias["campo"] = canonico
+        ocorrencias["campo_original"] = original
         ocorrencias["valor_original"] = bruta.loc[mascara, original]
         ocorrencias["motivo"] = "VALOR_OPCIONAL_INVALIDO"
         partes_anomalias.append(ocorrencias)
-
     fora_ano = convertida["referencia"].map(
         lambda valor: valor is not None and valor.year != ano_origem
-    )
-    ocorrencias = bruta.loc[fora_ano, metadados].copy()
-    ocorrencias["campo"] = "Referência"
+    ).astype(bool)
+    ocorrencias = pd.DataFrame(index=retrato.index[fora_ano])
+    ocorrencias["campo"] = "referencia"
+    ocorrencias["campo_original"] = "Referência"
     ocorrencias["valor_original"] = bruta.loc[fora_ano, "Referência"]
     ocorrencias["motivo"] = "REFERENCIA_FORA_DE_2021"
     partes_anomalias.append(ocorrencias)
-    return pd.concat(partes_anomalias, ignore_index=True)
+    detalhes = pd.concat(partes_anomalias)
+    return retrato.loc[detalhes.index].reset_index(drop=True).join(detalhes.reset_index(drop=True))
 
 def calcular_metricas(base):
     saida = base.copy()
@@ -463,6 +475,9 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
         df_mes["arquivo_origem"] = arquivo.name
         df_mes["linha_origem"] = range(2, len(df_mes) + 2)
         df_mes["ano_origem"] = ano_origem
+        df_mes["data_carga"] = pd.Timestamp(inicio_execucao)
+        df_mes["pipeline"] = "ETL"
+        df_mes["versao_contrato"] = "1.1"
         partes.append(df_mes)
 
     df_bruta = pd.concat(partes, ignore_index=True, sort=False)
@@ -598,16 +613,16 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
     ])
 
     motivos_rejeicao = motivos_obrigatorios(df_padronizada, df_convertida)
-    mascara_rejeicao = motivos_rejeicao.map(bool)
-    df_rejeicoes = df_sem_duplicatas.loc[mascara_rejeicao].copy()
-    df_rejeicoes["motivos_rejeicao"] = motivos_rejeicao.loc[mascara_rejeicao]
+    mascara_rejeicao = motivos_rejeicao.map(bool).astype(bool)
+    df_rejeicoes = com_originais(df_convertida, df_sem_duplicatas).loc[mascara_rejeicao].copy()
+    df_rejeicoes["motivo_rejeicao"] = motivos_rejeicao.loc[mascara_rejeicao]
     df_tratada = df_convertida.loc[~mascara_rejeicao].copy()
     vra_anomalias = auditar_opcionais(df_sem_duplicatas, df_padronizada, df_convertida)
 
     motivos_detalhados = (
-        df_rejeicoes[metadados + ["motivos_rejeicao"]]
-        .explode("motivos_rejeicao")
-        .rename(columns={"motivos_rejeicao": "motivo"})
+        df_rejeicoes[metadados + ["motivo_rejeicao"]]
+        .explode("motivo_rejeicao")
+        .rename(columns={"motivo_rejeicao": "motivo"})
     )
     contagem_motivos = (
         motivos_detalhados.groupby("motivo").size()
@@ -631,7 +646,8 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
         metadados + ["numero_voo", "partida_prevista", "partida_real", "chegada_prevista",
                      "chegada_real", "diferenca_partida_min", "diferenca_chegada_min"],
     ].copy()
-    mascara_fora_ano = df_tratada["partida_prevista"].dt.year.ne(ano_origem)
+    df_tratada["partida_ano_diverge_flag"] = df_tratada["partida_prevista"].dt.year.ne(ano_origem)
+    mascara_fora_ano = df_tratada["partida_ano_diverge_flag"]
     partidas_previstas_fora_ano = df_tratada.loc[mascara_fora_ano].copy()
 
     print("Partidas com diferença absoluta >24h:", int(df_tratada["partida_atipica_flag"].sum()))
@@ -685,6 +701,17 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
 
 
 
+
+    etl_log_arquivos = inventario.rename(columns={"arquivo": "arquivo_origem"}).merge(
+        mensal.drop(columns="bruta"), on="arquivo_origem", validate="one_to_one",
+    )
+    for nome, base in [("ocorrencias_anomalias", vra_anomalias),
+                       ("excedentes_invalidos", df_duplicatas.loc[df_duplicatas["invalido_diagnostico"]])]:
+        contagens = base.groupby("arquivo_origem").size()
+        etl_log_arquivos[nome] = etl_log_arquivos["arquivo_origem"].map(contagens).fillna(0).astype("int64")
+    etl_log_arquivos["data_carga"] = inicio_execucao
+    etl_log_arquivos["pipeline"] = "ETL"
+    etl_log_arquivos["versao_contrato"] = "1.1"
 
     exigir(len(df_bruta) == len(df_duplicatas) + len(df_rejeicoes) + len(df_tratada),
            "A conciliação anual falhou.")
@@ -753,6 +780,8 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
         exigir(validacao_concluida, "Execute a validação antes de exportar.")
         PASTA_SAIDA.mkdir(parents=True, exist_ok=True)
         inventario = preservar_brutos(arquivos, inventario, PASTA_SAIDA)
+        etl_log_arquivos["sha256_copia"] = etl_log_arquivos["sha256"]
+        etl_log_arquivos["copia_bruta_verificada"] = True
         for nome, base in [
             ("vra_tratada", df_tratada),
             ("vra_rejeicoes", df_rejeicoes),
@@ -770,7 +799,8 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
             legado.unlink()
         for nome, base in [
             ("inventario_arquivos", inventario), ("resumo_qualidade", resumo_qualidade),
-            ("mensal", mensal), ("motivos_rejeicao", contagem_motivos),
+            ("mensal", mensal), ("etl_log_arquivos", etl_log_arquivos),
+            ("motivos_rejeicao", contagem_motivos),
             ("situacao_voo", situacao_voo), ("vra_conflitos_codigo", vra_conflitos_codigo),
             ("auditoria_esquema", auditoria_esquema), ("qualidade_colunas", qualidade_colunas),
             ("perfil_conversoes", perfil_conversoes),
@@ -811,6 +841,15 @@ def run_etl(input_dir, output_dir, *, load_database=False, replace=False,
         texto_explicacao = f"""# ETL VRA/ANAC 2021 — execução local
 
     Responsável: Arthur. Referências: contrato v1.1 e regras/saídas do ELT 2021 de Murilo Acioli.
+
+    Os 12 originais são copiados byte a byte para vra_bruta/, com manifesto SHA-256.
+    --export-raw adiciona uma tabela regenerada; ela não substitui as cópias originais.
+    Rastreabilidade: arquivo, registro lógico (cabeçalho = 1), ano, data_carga UTC,
+    pipeline=ETL e versao_contrato=1.1. Horários dos voos mantêm o fuso da fonte.
+    Rejeições e anomalias incluem campos canônicos e valores originais bruto__*.
+    motivo_rejeicao é uma lista JSON no CSV; anomalias identificam o campo problemático.
+    partida_ano_diverge_flag sinaliza o cruzamento de ano sem excluir o registro.
+    etl_log_arquivos.csv reúne as contagens e a conciliação por arquivo.
 
     O Python lê os CSVs como texto e compara os 20 campos brutos antes da padronização.
     Codeshare permanece na base bruta e sua presença é auditada por arquivo.
