@@ -1,0 +1,3 @@
+aeroporto_icao,descricao_original,descricao_resolvida,fonte_url,justificativa
+SBEG,LÁBREA - LÁBREA - AM - BRASIL,EDUARDO GOMES - MANAUS - AM - BRASIL,https://www.anac.gov.br/assuntos/legislacao/legislacao-1/portarias/2020/portaria-no-3204-sia-10-11-2020/@@display-file/arquivo_norma/PA2020-3204.pdf,Portaria ANAC de 2020 associa SBEG a Eduardo Gomes; resolução apenas da descrição dimensional sem alterar código ou fonte bruta.
+SWHP,OLHOS D´ÁGUA - ÁGUA BOA - MG - BRASIL,OLHOS D´ÁGUA - ÁGUA BOA - MT - BRASIL,https://www.anac.gov.br/assuntos/setor-regulado/aerodromos/localizacao-geografica-arquivos/aerodromos/publicos-todas-as-regioes/download.table,Cadastro ANAC associa SWHP a Olhos D’Água em Água Boa MT; preservado o nome histórico da fonte.
