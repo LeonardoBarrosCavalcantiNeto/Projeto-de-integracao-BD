@@ -1,0 +1,20 @@
+{
+  "livre_inicial_bytes": 10075009024,
+  "repositorio_inicial_bytes": 47521456128,
+  "projeto_com_bases_inicial_bytes": 48224202752,
+  "livre_pos_limpeza_bytes": 22337794048,
+  "inodes_livres_inicio": 6826501,
+  "removidos": [
+    {
+      "caminho": ".local/final/restauracao_20261117_195714_156109",
+      "bytes_alocados_antes": 11164098560,
+      "motivo": "Cópia do teste de restauração com RESTAURACAO_OK. O ambiente carregado e o arquivo físico validado foram preservados."
+    },
+    {
+      "caminho": ".local/final/postgres_tentativa_sem_resolucao",
+      "bytes_alocados_antes": 1099395072,
+      "motivo": "Cluster desligado da tentativa com rollback. O log da falha foi preservado e a instalação seguinte foi validada."
+    }
+  ],
+  "livre_na_entrega_bytes": 22335569920
+}

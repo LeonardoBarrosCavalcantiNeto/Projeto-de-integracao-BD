@@ -1,0 +1,293 @@
+{
+  "verificado_em": "2026-11-17T17:56:30.798795+00:00",
+  "arquivos": [
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_01.csv",
+      "registros": 91914,
+      "sha256": "150e8a3556d6d1c4bfbca30407cfd24b0f0614aa38945fa802222e535287dffb",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_02.csv",
+      "registros": 79571,
+      "sha256": "ed0088bd0f575d29532b112c18b842aebbde07b0fef31fcb9b1bddc805bb6558",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_03.csv",
+      "registros": 83152,
+      "sha256": "b79e2187b8d374fc3e6172c59fb0cd552946134ff02bfc8fcb92a93c271a1453",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_04.csv",
+      "registros": 77445,
+      "sha256": "f7655e8eb8bace235e925f342128aad742ea9488033979d1645396267e6800a4",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_05.csv",
+      "registros": 76732,
+      "sha256": "f653080eca1474e9a659fca6da5f526d1026bd1bb574d6c97eeed2ebfe7cb4f8",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_06.csv",
+      "registros": 74254,
+      "sha256": "9867d73e815e14cdafaf740990053f1abcc1353d3eee9158b281ac62e9161300",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_07.csv",
+      "registros": 85687,
+      "sha256": "72f4e76ca4667c31ba7904ec6549509f8909b94ff2d20387322df4630f151c22",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_08.csv",
+      "registros": 80588,
+      "sha256": "7d5698bf3848d43763b949d74e2e16b063269dca9283544641141c44a60f2240",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_09.csv",
+      "registros": 80537,
+      "sha256": "258fc060336f9c9de061d443653093760b385247f45997ef817fdcd9947554c9",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_10.csv",
+      "registros": 84268,
+      "sha256": "6febae9a95cd31694d2b182f9273273f144914178473d0feb3112a06cb884cea",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_11.csv",
+      "registros": 81046,
+      "sha256": "ab1d297e18543d7ac39d4bc0b534e4913fda5e7dfde42d379553db87c6e2f488",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2019,
+      "arquivo": "VRA_2019_12.csv",
+      "registros": 88220,
+      "sha256": "95642e969317c2b26047d6e4be83d5d268315bfb3f9bc760f4c815e2de308b5e",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_01.csv",
+      "registros": 92390,
+      "sha256": "c64acd1a13397c83861acf5693bf60aa5550acf1fbad08d643284b85f74a45d4",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_02.csv",
+      "registros": 80919,
+      "sha256": "ba6a91885d1f1ded54cb46bb714d5a91b26294088a4f82dd30d5da28c9e0e520",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_03.csv",
+      "registros": 64523,
+      "sha256": "e6fe0059e5d784bf7e551bf14aa3e551771c4450dd047c0dabdbeb1c8ec3829e",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_04.csv",
+      "registros": 7617,
+      "sha256": "c76f5ea70b68896f06335eb54903e2b75cc57ee9b41b6e76cd5a10c2d0e3083f",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_05.csv",
+      "registros": 9514,
+      "sha256": "20dfa011cb3423f92674baa629429dfb88b9950fa0a7c4186e79210f5b657fd2",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_06.csv",
+      "registros": 12800,
+      "sha256": "d01012074bcb98932f85e0c8ef76e02a2b1c0fc4a52200624b0a3f5ad53262ef",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_07.csv",
+      "registros": 19850,
+      "sha256": "883b2fc9da868733968ae13c03eb6da42834797b8acbfa50fae344dce64c8e5f",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_08.csv",
+      "registros": 24806,
+      "sha256": "2c187990075bc37701abc3e1a0c4c0f6951cd928b1d34df0751f5c87a1b67251",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_09.csv",
+      "registros": 30660,
+      "sha256": "f23a155467ca9424ce6f74cf0acf4182650293aff0fabd08edaa681b7bc600e1",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_10.csv",
+      "registros": 40590,
+      "sha256": "d12483fe7b950ace85c012c68ded986a9b8281018eaea250dc94ffd685de59f7",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_11.csv",
+      "registros": 45553,
+      "sha256": "63531448fcbf6d9b4263adeb837c43ce7bd2ecea1385a0c9e41fc5914403197c",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2020,
+      "arquivo": "VRA_2020_12.csv",
+      "registros": 54323,
+      "sha256": "882251d9e7ce71a003cc9039806cdc1948751d5651983604ed185253e0f7dcfa",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_01.csv",
+      "registros": 61920,
+      "sha256": "6ee26c0fef40bf502f0557abd4d321a81ed0e9abb0c101445f7dffdb295078c3",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_02.csv",
+      "registros": 46078,
+      "sha256": "693a2bacdad0a3cedaa6128c3cc10bb0691ccf23958c5e8cbccf5a5feb5d47fb",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_03.csv",
+      "registros": 41701,
+      "sha256": "b590ba0323cbd37ef50f9272cf067ffe4176607516222bf9dbffbc03f7bd6a91",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_04.csv",
+      "registros": 30224,
+      "sha256": "a55b75cceb5e90fa8f8d8ed0b7910b8dfcb2c45f9ddddeecee68547758bd5bb0",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_05.csv",
+      "registros": 37341,
+      "sha256": "49907e9546d02fd3cbbdcc5dc62bb8d64130ce91c03f05a1a1d468db0c43132b",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_06.csv",
+      "registros": 42512,
+      "sha256": "babaf8882b29fa3b89a83df226af6385519fbe222ae3355952a708e172f93fb9",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_07.csv",
+      "registros": 55555,
+      "sha256": "fa1a34e334ed3faa5ad5d9bc1e7c39364744b68a4b8fd87d64bd68295c19ca75",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_08.csv",
+      "registros": 56367,
+      "sha256": "4dd71d230cbe058fde0a645fac3897fbd44a33cd61326ae88d5f90341fb7d59f",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_09.csv",
+      "registros": 58362,
+      "sha256": "f25fa7df2051735f0b09046f6242f34e9abb435dbf3dfeb681217a9c86107052",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_10.csv",
+      "registros": 61288,
+      "sha256": "eb18165d34365084e57c3f6a7f6cbbad9428f06c20f90616804b5e94946b3d2f",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_11.csv",
+      "registros": 66649,
+      "sha256": "933c75b29dd5d7b9ab185d81cd199cde7dd9a7ac31b59e6ffc5ecb2c7c749df0",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    },
+    {
+      "ano": 2021,
+      "arquivo": "VRA_2021_12.csv",
+      "registros": 74151,
+      "sha256": "96919fc3a01ef60ffaa634d469667f57af7d0d2f3be18cdd9c27c4c76c950928",
+      "etl_elt_fontes_iguais": true,
+      "fonte_inalterada": true
+    }
+  ]
+}

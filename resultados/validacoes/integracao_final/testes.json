@@ -1,0 +1,15 @@
+{
+  "comando": ".venv/bin/python -m unittest discover -s tests -v",
+  "natureza": "Fixtures sintéticas em PostgreSQL 18.6",
+  "aprovados": 7,
+  "duracao_segundos": 10.463,
+  "casos": [
+    "test_aceita_quando_pico_preserva_reserva (test_espaco_disco.EspacoDisco.test_aceita_quando_pico_preserva_reserva)",
+    "test_bloqueia_quando_pico_invade_reserva (test_espaco_disco.EspacoDisco.test_bloqueia_quando_pico_invade_reserva)",
+    "test_cabecalho_alterado_aborta (test_ingestao.Ingestao.test_cabecalho_alterado_aborta)",
+    "test_mes_ausente_aborta (test_ingestao.Ingestao.test_mes_ausente_aborta)",
+    "test_preserva_campos_e_registro_logico (test_ingestao.Ingestao.test_preserva_campos_e_registro_logico)",
+    "test_seis_fluxos_independentes (test_integracao_final.Final.test_seis_fluxos_independentes)",
+    "test_contrato_e_reexecucao (test_pipeline_postgresql.PipelinePostgreSQL.test_contrato_e_reexecucao)"
+  ]
+}
