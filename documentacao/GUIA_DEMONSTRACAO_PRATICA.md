@@ -1,6 +1,8 @@
 # Guia de demonstração prática — VRA/ANAC
 
-Use um **PostgreSQL já carregado** e ensaie em uma sessão com acesso de leitura aos schemas da entrega. As consultas ao vivo abaixo usam nomes explícitos de schema. O roteiro de instalação e carga está separado. [Reprodução](REPRODUCAO_MULTIPLATAFORMA.md) · [Modelo dimensional](MODELO_DIMENSIONAL_FINAL.md) · [Roteiro de apresentação](ROTEIRO_APRESENTACAO.md)
+Use um **PostgreSQL já carregado** e ensaie em uma sessão com acesso de leitura aos schemas da entrega. As consultas ao vivo abaixo usam nomes explícitos de schema. [Reprodução](REPRODUCAO_MULTIPLATAFORMA.md) · [Modelo dimensional](MODELO_DIMENSIONAL_FINAL.md)
+
+O roteiro de apresentação é um material interno da equipe, destinado à preparação da exposição oral, e não faz parte da entrega pública do repositório.
 
 ## Preparação
 
@@ -14,7 +16,7 @@ BEGIN READ ONLY;
 SET LOCAL statement_timeout = '15s';
 ```
 
-**Contextos de resultado.** Os números de referência a seguir são da execução histórica com os CSVs reais. Nas fixtures recentes, a conferência adicional encontrou 3, 3 e 4 fatos por DW, em 2019–2021. Compare o resultado ao contexto da conexão. O guia usa exemplos extraídos dos SQLs atuais e consultas montadas com o DDL da entrega. A suíte PostgreSQL anterior testou a integração com fixtures. As consultas acrescentadas neste guia foram revistas estaticamente para o material. [Relatório de resultados](../relatorio/STATUS_FINAL_PROJETO.md) · [Teste com fixtures](INTEGRACAO_FINAL.md#validação-funcional-com-fixtures)
+Os números de referência a seguir vêm da execução histórica com os CSVs reais. Na revisão da entrega, as consultas deste guia rodaram via `psql` em um banco sintético com 3, 3 e 7 fatos por DW para 2019, 2020 e 2021. [Resultados históricos](../relatorio/STATUS_FINAL_PROJETO.md) · [Revisão da entrega](../relatorio/PORTABILIDADE.md#revisão-da-entrega)
 
 ## Consultas para demonstrar e explicar
 

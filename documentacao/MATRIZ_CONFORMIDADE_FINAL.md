@@ -2,10 +2,11 @@
 
 **Contrato de referência:** [`Contrato_Tratamento_VRA_ANAC_2019_2021_ATUALIZADO.pdf`](Contrato_Tratamento_VRA_ANAC_2019_2021_ATUALIZADO.pdf), versão **1.1**, aprovada em **11/11/2026**.  
 **Escopo:** seis pipelines (ETL e ELT para 2019, 2020 e 2021), dois Data Warehouses, rastreabilidade, qualidade, validações e reprodução acadêmica.  
-**Versão de trabalho informada:** branch local `portabilidade-academica`, commit `def47cc`; implementação validada anteriormente no commit `86ffb99`. Nenhum *push* foi autorizado ou relatado.  
+**Base da revisão da entrega:** `main` em `6fb9485`, que inclui o PR #11 de Arthur. A execução histórica dos dados completos foi registrada em `86ffb99`.
+
 **Base das evidências:** [`relatorio/STATUS_FINAL_PROJETO.md`](../relatorio/STATUS_FINAL_PROJETO.md), [`relatorio/QUALIDADE_2019_2021.md`](../relatorio/QUALIDADE_2019_2021.md), [`relatorio/PORTABILIDADE.md`](../relatorio/PORTABILIDADE.md), arquivos em [`resultados/validacoes/integracao_final/`](../resultados/validacoes/integracao_final/), e verificações do DataGrip feitas pelo responsável.
 
-> **Como interpretar o status:** **Validado (carga real)** indica evidência relatada da execução dos 36 CSVs completos, complementada pelas consultas locais indicadas; **Testado (Fedora)** indica execução de testes automatizados no Fedora; **Preparado, não testado** descreve documentação/implementação que ainda carece de prova naquele ambiente; **Limitação documentada** não deve ser apresentada como confirmação de requisito externo. Este documento consolida evidências existentes, sem afirmar que uma nova carga ou teste foi executado na sua elaboração.
+> **Validado (carga real)** identifica evidências da execução histórica dos 36 CSVs completos. **Testado (Fedora)** identifica verificações automatizadas. O registro de portabilidade descreve os testes sintéticos adicionais da revisão e os cenários pendentes. [Revisão da entrega](../relatorio/PORTABILIDADE.md#revisão-da-entrega)
 
 ## 1. Resultado executivo da integração
 
@@ -94,12 +95,13 @@ As quantidades de partidas/chegadas atípicas são as **contagens finais após d
 | Backup físico e teste de restauração | **Validado no ambiente de referência** | [`backup_isolado.json`](../resultados/validacoes/integracao_final/backup_isolado.json) |
 | Roteiro manual SQL e instalação ETL isolada | **Testado no ambiente de referência** | Suíte de integração original e logs |
 | Suíte após adaptações de portabilidade | **Testado (Fedora)** | **10 testes aprovados**, segundo a execução informada no commit `def47cc` |
+| Suíte da revisão da entrega | **Testado (Fedora)** | 50 testes aprovados com fixtures e PostgreSQL 18.6. [Revisão](../relatorio/PORTABILIDADE.md#revisão-da-entrega) |
 | 36 CSVs locais contra manifesto SHA-256 | **Testado (Fedora)** | **36 conferências aprovadas**, segundo relatório de portabilidade |
-| Guia de Windows, macOS e Linux | **Preparado, não testado nos três sistemas** | [`REPRODUCAO_MULTIPLATAFORMA.md`](REPRODUCAO_MULTIPLATAFORMA.md) |
-| Download HTTPS automatizado da ANAC | **Implementado, teste real pendente** | `scripts/baixar_vra.py`; acesso DNS/HTTPS bloqueado no ambiente usado |
-| Fluxo por serviço PostgreSQL com autenticação, `psql` e backup lógico | **Documentado, teste real pendente** | [`PORTABILIDADE.md`](../relatorio/PORTABILIDADE.md); sockets indisponíveis na sessão |
+| Guia de Windows, macOS e Linux | **Testado com fixtures no Fedora** | Windows e macOS aguardam execução. [Guia](REPRODUCAO_MULTIPLATAFORMA.md) |
+| Download automatizado da ANAC | **Testado com URLs locais** | Download HTTPS dos 36 CSVs pendente. [Portabilidade](../relatorio/PORTABILIDADE.md) |
+| Fluxo por serviço PostgreSQL com autenticação, `psql` e backup lógico | **Testado com fixtures no Fedora** | Serviço descartável, SCRAM em loopback e restauração validada. [Revisão](../relatorio/PORTABILIDADE.md#revisão-da-entrega) |
 | Cliente gráfico DataGrip na máquina do responsável | **Confirmado posteriormente** | Conexão local e consultas de schemas, fatos e distribuição anual |
-| GitHub publicado | **Não realizado intencionalmente** | Somente commits locais; revisão e *push* cabem ao grupo |
+| GitHub publicado | **Main consolidada no remoto** | PR #11 de Arthur incorporado. |
 
 ## 6. Limitações e decisões que devem ser explicadas na apresentação
 
@@ -127,4 +129,4 @@ As quantidades de partidas/chegadas atípicas são as **contagens finais após d
 
 ---
 
-**Conclusão:** segundo as evidências consolidadas, a **integração e a comparação dos três anos estão concluídas e validadas no ambiente Fedora/PostgreSQL 18**, com os dois DWs equivalentes e rastreabilidade auditada. A **portabilidade foi preparada e testada parcialmente**, restando comprovação real em Windows/macOS e do download/serviço remoto. Esta matriz substitui o antigo inventário com marcadores `FALTANTE` ou `NECESSITA INTEGRAÇÃO`, que refletiam apenas o estado anterior ao desenvolvimento final.
+A execução histórica com dados reais comprovou a equivalência e a rastreabilidade no Fedora/PostgreSQL 18. A revisão da entrega conferiu o fluxo com dados sintéticos. A reprodução em Windows e macOS, a execução hospedada no Colab e o download integral por HTTPS aguardam verificação.
