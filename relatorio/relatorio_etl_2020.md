@@ -1,6 +1,8 @@
 # ETL VRA/ANAC 2020 — execução e material da entrega
 
-**Contrato:** v1.1. **Validação:** 16/11/2026. O tratamento e a carga de 2020 foram executados; o notebook salvo no projeto contém o retorno `ja_carregada` e está com `EXECUTAR_CARGA = False`. As consultas de validação no PostgreSQL foram aprovadas. A comparação por registro com o ELT e a consolidação com 2019/2021 continuam pendentes.
+**Contrato:** v1.1. **Validação:** 16/11/2026. O tratamento e a carga de 2020 foram executados; o notebook salvo no projeto contém o retorno `ja_carregada` e está com `EXECUTAR_CARGA = False`. As consultas de validação no PostgreSQL foram aprovadas.
+
+> **Nota histórica.** A comparação por registro com o ELT e a carga dimensional dos três anos foram validadas posteriormente pelo pipeline integrado. As evidências desta entrega individual dizem respeito à carga experimental de 2020. Consulte o [relatório final do projeto](STATUS_FINAL_PROJETO.md).
 
 ## 1. Justificativa da base e das tecnologias — seção 3 do grupo
 
@@ -92,9 +94,9 @@ python scripts/etl_vra_anac_2020.py
 
 O tratamento exporta as saídas completas para `dados/processados/2020/`, fora do Git. O comando acima não carrega dados no banco.
 
-Para a carga, crie `vra_dw_2020` no PostgreSQL e configure o `.env` local com PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD e `PGSCHEMA=etl_2020`. Use o usuário, senha e porta de sua instalação; não publique o arquivo. Se houver DATABASE_URL, ela tem precedência sobre os outros parâmetros de conexão.
+Para a carga experimental, inicie o PostgreSQL e crie um banco de teste separado dos DWs finais, por exemplo `vra_dw_2020`. Na raiz do projeto, copie `.env.example` para `.env` e ajuste `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` e `PGSCHEMA=etl_2020` (ou `etl_2020_<sufixo>`). Se houver `DATABASE_URL`, ela tem precedência sobre os outros parâmetros de conexão. Mantenha o `.env` fora do Git.
 
-Execute [configuracao_banco.ipynb](../notebooks/configuracao_banco.ipynb), que apenas testa a conexão. Depois de conferir o tratamento, ative `EXECUTAR_CARGA` na última célula do ETL. O script oferece a alternativa explícita `--carregar`. Ao terminar, volte a variável para `False` antes de salvar o notebook.
+O próprio [etl_2020.ipynb](../notebooks/etl/etl_2020.ipynb) oferece uma verificação opcional em modo somente leitura (`TESTAR_CONEXAO = True`) na seção 6. Depois de conferir o tratamento, ative `EXECUTAR_CARGA = True` na célula de carga experimental, se quiser gravar no PostgreSQL. O script oferece a alternativa explícita `--carregar`. Ao terminar, volte as duas variáveis para `False` antes de salvar o notebook.
 
 A carga usa transação única, dimensões antes da fato e medidas NUMERIC(12,2). Mantém os 20 campos brutos em TEXT e impõe PKs, unicidade e FKs. Uma execução reconhecida retorna `ja_carregada` sem inserir novamente; um schema de outra execução é recusado. Não há substituição automática de tabelas. A verificação de reexecução confere identidade e contagens, não toda alteração manual possível no conteúdo do banco.
 
@@ -111,7 +113,7 @@ A carga foi executada pelo integrante no Colab com ambiente local. A cópia exec
 
 A confirmação da reexecução veio do integrante e também aparece na saída salva do notebook. A evidência da consulta é [validacao_postgresql_etl_2020.json](../resultados/validacoes/validacao_postgresql_etl_2020.json). As consultas reutilizáveis estão na seção **7. Validação SQL da carga** do [notebook ETL](../notebooks/etl/etl_2020.ipynb). Elas são executadas em transação somente de leitura e não fazem carga.
 
-A entrega versiona somente o inventário dos CSVs, o resumo de qualidade da fase de tratamento e a validação posterior do PostgreSQL. As saídas completas e auditorias de rejeições, motivos, duplicatas e anomalias continuam em `dados/processados/2020/` e no banco. Cópias históricas de evidências detalhadas ficam em `dados/processados/2020/evidencias_locais/`, fora do Git. O resumo da fase de tratamento antecede a carga; sua linha de status não substitui o JSON de validação posterior. O notebook reúne as consultas SQL e suas saídas.
+A entrega simplificada preserva o resumo de qualidade da fase de tratamento e a validação posterior do PostgreSQL. O inventário dos CSVs é regenerado pelo notebook, conforme o [inventário da limpeza](LIMPEZA_RESULTADOS.md). As saídas completas e auditorias de rejeições, motivos, duplicatas e anomalias continuam em `dados/processados/2020/` e no banco. Cópias históricas de evidências detalhadas ficam em `dados/processados/2020/evidencias_locais/`, fora do Git. O resumo da fase de tratamento antecede a carga; sua linha de status não substitui o JSON de validação posterior. O notebook reúne as consultas SQL e suas saídas.
 
 Durante o desenvolvimento, oito testes sintéticos foram executados sobre opcionais inválidos, interseção duplicatas × inválidos, igualdade após padronização sem nova exclusão, limites de 24h, antecipação, ano 2202, conflitos e estabilidade de IDs, múltiplos motivos, todas as linhas rejeitadas e resolução das nove FKs. O arquivo de apoio desses testes não integra a entrega atual; as verificações reproduzíveis da carga e das métricas estão no notebook e na evidência PostgreSQL.
 
@@ -155,9 +157,9 @@ No quadro final de contribuição, registrar ETL 2020, preparação da dimensão
 
 Ao trabalhar no ETL de 2020, um desafio foi distinguir ausência permitida, erro em campo obrigatório e valor temporal suspeito. Aprendi que manter os dados brutos e a origem de cada registro permite explicar por que uma ocorrência foi rejeitada ou sinalizada, sem inventar correções. A necessidade de comparar ETL e ELT evidenciou que totais iguais não bastam: atributos e medidas também precisam seguir o mesmo contrato. As descrições conflitantes de aeroportos mostraram a importância das chaves naturais e das decisões documentadas do grupo.
 
-## 9. Comparação com o ELT e pendências
+## 9. Comparação com o ELT na entrega individual
 
-Os 12 hashes e os oito indicadores comparáveis publicados pelo ELT coincidem com o ETL. A equivalência por registro ainda não foi verificada porque o schema do parceiro não está disponível no banco de comparação. Quando estiver:
+Os 12 hashes e os oito indicadores comparáveis publicados pelo ELT coincidem com o ETL. Na entrega individual, o schema do parceiro não estava disponível no banco de comparação. O comando preparado para conferir os registros é:
 
 ```bash
 python scripts/comparar_2020.py --elt-schema elt_2020
@@ -170,9 +172,8 @@ Pontos preparados para a revisão cruzada, ainda não enviados ao PR:
 - Conferir diagnóstico de igualdade apenas após trim/upper e interseção excedentes × inválidos.
 - Verificar as 15 partidas previstas fora de 2020; o SQL do parceiro verifica ano de referência, que é outro indicador.
 - Comparar os valores por arquivo/linha, além dos totais.
-- Corrigir no relatório do parceiro o caminho `notebooks/ELT/elt_2020.ipynb` para o caminho versionado `notebooks/elt/elt_2020.ipynb`.
 
-Restam a revisão cruzada no GitHub, a integração dimensional dos três anos, a revisão conjunta da análise e a inserção destes conteúdos no relatório/apresentação final. Revisar o parágrafo pessoal e registrar autoria e evidências antes dos commits do integrante.
+A revisão cruzada no GitHub, a revisão conjunta da análise e a inclusão deste material na apresentação eram ações previstas nesta etapa. A conclusão da integração dimensional está registrada no [relatório final do projeto](STATUS_FINAL_PROJETO.md).
 
 ## 10. Organização da entrega após a revisão dos arquivos
 
