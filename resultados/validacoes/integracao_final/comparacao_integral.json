@@ -1,0 +1,39 @@
+{
+  "postgresql": "18.6",
+  "lote_maximo_ocorrencias": 25000,
+  "work_mem_mb_por_operacao": 8,
+  "maior_rss_kib": 351872,
+  "tempo_comparacao": "9:09.41",
+  "sha256_sql": "297caf7814beab758de01246a4c31a025ee316914c5d66ac089441c95c5791ce",
+  "dimensoes_equivalentes": 7,
+  "fks_validadas_por_fato": 10,
+  "anos": [
+    {
+      "ano": 2019,
+      "raw": 983414,
+      "duplicatas_excedentes": 470,
+      "rejeicoes": 18,
+      "fato_por_dw": 982926,
+      "divergencias_de_conteudo": 0,
+      "rastreabilidade_verificada_nos_dois_fluxos": true
+    },
+    {
+      "ano": 2020,
+      "raw": 483545,
+      "duplicatas_excedentes": 124,
+      "rejeicoes": 1512,
+      "fato_por_dw": 481909,
+      "divergencias_de_conteudo": 0,
+      "rastreabilidade_verificada_nos_dois_fluxos": true
+    },
+    {
+      "ano": 2021,
+      "raw": 632148,
+      "duplicatas_excedentes": 0,
+      "rejeicoes": 25511,
+      "fato_por_dw": 606637,
+      "divergencias_de_conteudo": 0,
+      "rastreabilidade_verificada_nos_dois_fluxos": true
+    }
+  ]
+}
