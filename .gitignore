@@ -35,3 +35,47 @@ __pycache__/
 /resultados/validacoes/mensal_etl_2020.csv
 /resultados/validacoes/situacao_voo_etl_2020.csv
 /resultados/validacoes/vra_anomalias_etl_2020.csv.gz
+
+# Cargas canônicas, bancos isolados e backups recuperáveis (nunca publicar)
+.local/
+backups/
+*.dump
+
+# Exportações reproduzíveis retiradas na revisão final
+/resultados/validacoes/atipicos_amostra_elt_2020.csv
+/resultados/validacoes/atipicos_amostra_elt_2021.csv
+/resultados/validacoes/integracao_final/aeroportos_destino_elt.csv
+/resultados/validacoes/integracao_final/aeroportos_destino_etl.csv
+/resultados/validacoes/integracao_final/aeroportos_origem_elt.csv
+/resultados/validacoes/integracao_final/aeroportos_origem_etl.csv
+/resultados/validacoes/integracao_final/companhias_elt.csv
+/resultados/validacoes/integracao_final/companhias_etl.csv
+/resultados/validacoes/integracao_final/dimensoes.csv
+/resultados/validacoes/integracao_final/dimensoes_elt.csv
+/resultados/validacoes/integracao_final/dimensoes_etl.csv
+/resultados/validacoes/integracao_final/fato_elt.csv
+/resultados/validacoes/integracao_final/fato_etl.csv
+/resultados/validacoes/integracao_final/indicadores_elt.csv
+/resultados/validacoes/integracao_final/indicadores_etl.csv
+/resultados/validacoes/integracao_final/mensal_elt.csv
+/resultados/validacoes/integracao_final/mensal_etl.csv
+/resultados/validacoes/integracao_final/motivos_rejeicao.csv
+/resultados/validacoes/integracao_final/nulos_elt.csv
+/resultados/validacoes/integracao_final/nulos_etl.csv
+/resultados/validacoes/integracao_final/origem_arquivo.csv
+/resultados/validacoes/integracao_final/restricoes.csv
+/resultados/validacoes/integracao_final/variantes_dimensoes.csv
+/resultados/validacoes/layout_por_arquivo_elt_2021.csv
+/resultados/validacoes/mensal_elt_2020.csv
+/resultados/validacoes/mensal_elt_2021.csv
+/resultados/validacoes/situacao_voo_elt_2020.csv
+/resultados/validacoes/situacao_voo_elt_2021.csv
+/resultados/validacoes/vra_anomalias_elt_2020.csv
+/resultados/validacoes/vra_anomalias_elt_2021.csv
+/resultados/validacoes/vra_conflitos_codigo_elt_2021.csv
+
+# Logs e exportações dos roteiros históricos
+/resultados/logs/
+/resultados/rejeicoes/
+/resultados/validacoes/integracao_2019_2020/
+/resultados/validacoes/guia_execucao/
