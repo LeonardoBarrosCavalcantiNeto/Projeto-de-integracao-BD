@@ -18,7 +18,7 @@ Use **Git, Python 3.11+ e PostgreSQL 18**, com `psql` no PATH. Para a carga dos 
 1. Clone a branch da entrega quando estiver publicada e entre na pasta do projeto. Execute os comandos seguintes a partir dessa raiz.
 
    ```bash
-   git clone --branch portabilidade-academica https://github.com/LeonardoBarrosCavalcantiNeto/Projeto-de-integracao-BD.git
+   git clone https://github.com/LeonardoBarrosCavalcantiNeto/Projeto-de-integracao-BD.git
    cd Projeto-de-integracao-BD
    ```
 
