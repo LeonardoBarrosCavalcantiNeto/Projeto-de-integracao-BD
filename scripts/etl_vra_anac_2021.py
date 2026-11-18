@@ -6,7 +6,7 @@ audita rejeições/anomalias e calcula métricas antes de qualquer carga no banc
 Dimensões e Fato compartilhadas permanecem na integração do grupo.
 
 Uso sem banco:
-    python scripts/etl_vra_anac_2021.py --input-dir dados/brutos --output-dir dados/processados/2021/etl
+    python scripts/etl_vra_anac_2021.py --input-dir dados/brutos/2021 --output-dir dados/processados/2021/etl
 
 Para carregar no banco configurado no .env, acrescente --load-db.
 """

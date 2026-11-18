@@ -9,13 +9,13 @@ O projeto integra 36 CSVs mensais de etapas de voo da ANAC. Cada fluxo carrega u
 
 O ETL integrado dos três anos é coordenado por `scripts/integracao_final.py`, que reutiliza funções Pandas de `scripts/etl_vra_anac_2021.py` também para 2019 e 2020. Os scripts e notebooks individuais registram a implementação de cada integrante. No ELT, `scripts/integrar_anac.py` renderiza o template parametrizado `elt_2019_2020.sql` para os dois anos. `elt_2021.sql` tem regras próprias de layout e conversão. [Decisões técnicas](documentacao/DECISOES_TECNICAS.md)
 
-A execução validada registrou **2.071.472 fatos em cada DW** e **zero divergências** na comparação integral. O ambiente de referência foi Fedora. A execução em Windows e macOS ainda está pendente, e o guia inclui instruções para ambos. [Resultados finais](relatorio/STATUS_FINAL_PROJETO.md) · [Escopo dos testes de portabilidade](relatorio/PORTABILIDADE.md)
+A execução histórica com os 36 CSVs registrou **2.071.472 fatos em cada DW** e **zero divergências** na comparação integral. O ambiente de referência foi Fedora. O guia inclui instruções para Windows e macOS, que ainda aguardam validação nesses sistemas. [Resultados e verificações da entrega](relatorio/STATUS_FINAL_PROJETO.md) · [Portabilidade](relatorio/PORTABILIDADE.md)
 
 ## Preparar e executar
 
 Use **Git, Python 3.11+ e PostgreSQL 18**, com `psql` no PATH. Para a carga dos dados reais, planeje cerca de **28 GiB livres no volume do PostgreSQL** após a preparação do bundle de referência. O volume de preparação também precisa de espaço. O comando `check-load` confere o requisito antes da carga. [Requisitos e dimensionamento](documentacao/REPRODUCAO_MULTIPLATAFORMA.md#4-preparar-carregar-e-validar)
 
-1. Clone a branch da entrega quando estiver publicada e entre na pasta do projeto. Execute os comandos seguintes a partir dessa raiz.
+1. Clone o repositório. O clone padrão seleciona a `main`. Execute os comandos seguintes a partir da raiz do projeto.
 
    ```bash
    git clone https://github.com/LeonardoBarrosCavalcantiNeto/Projeto-de-integracao-BD.git
@@ -32,7 +32,7 @@ Use **Git, Python 3.11+ e PostgreSQL 18**, com `psql` no PATH. Para a carga dos 
 
 3. Crie um papel de avaliação e um banco vazio do qual esse papel seja proprietário. Configure `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER` e `PGCLIENTENCODING=UTF8` no terminal e confira a conexão antes de carregar. Para executar os ETLs individuais via Python, ajuste `.env.example` numa cópia chamada `.env`. Os bundles finais usam a conexão de `psql`. [Criação do banco, autenticação e teste de conexão](documentacao/REPRODUCAO_MULTIPLATAFORMA.md#3-criar-o-banco-de-avaliação)
 
-4. Obtenha e confira os 36 CSVs oficiais. Se já tiver uma cópia, coloque os arquivos em `dados/brutos/ANO/` e comece por `--apenas-verificar`. Esse comando precisa aprovar todos os meses antes de seguir. [Obtenção dos dados e verificação](documentacao/REPRODUCAO_MULTIPLATAFORMA.md#2-obter-e-conferir-os-36-csvs) · [Manifesto](dados/manifesto_vra.json)
+4. Obtenha e confira os 36 CSVs oficiais. Se já tiver uma cópia, coloque os arquivos como `dados/brutos/ANO/VRA_ANO_MM.csv` e execute apenas o segundo comando. A verificação precisa aprovar todos os meses antes da carga. [Obtenção dos dados e verificação](documentacao/REPRODUCAO_MULTIPLATAFORMA.md#2-obter-e-conferir-os-36-csvs) · [Manifesto](dados/manifesto_vra.json)
 
    ```bash
    python scripts/baixar_vra.py
@@ -50,14 +50,38 @@ Use **Git, Python 3.11+ e PostgreSQL 18**, com `psql` no PATH. Para a carga dos 
 
 ## Validar e apresentar
 
+A comparação integral confere RAW, tratamento, descartes, anomalias, fatos, dimensões e chaves. Ela retorna `COMPARACAO_EXATA_OK` para cada ano quando passa.
+
 ```bash
 psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/validar_final.sql
-psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/validar_restauracao.sql
 ```
 
-O primeiro SQL instala o comparador e retorna `COMPARACAO_EXATA_OK` para cada ano quando a comparação passa. O segundo usa esse comparador para conferir contagens, dimensões e chaves e retorna `RESTAURACAO_OK`. Para apresentar as análises por ano, companhia e aeroporto em um cliente SQL, use `sql/integracao/05_analises.sql` com os nomes dos schemas indicados no roteiro. [Roteiro de análises, auditorias e evidências](documentacao/INTEGRACAO_FINAL.md) · [Evidências da validação](resultados/validacoes/integracao_final/)
+As consultas complementares abaixo apresentam indicadores dos dois DWs e rastreiam ocorrências de 2021 até o CSV de origem.
 
-Os testes usam `unittest`. A suíte completa requer `initdb` e `postgres` no PATH e cria clusters sintéticos temporários. Execute a suíte completa a partir da raiz.
+```bash
+psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/analises_finais.sql
+psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/rastreabilidade.sql
+```
+
+O backup lógico e a validação de restauração são opcionais para a reprodução. O roteiro manual em cliente SQL e os notebooks dos integrantes também são opcionais. Para o ETL individual de 2021, use `dados/brutos/2021/` ou siga a preparação de ZIP no Colab hospedado. [Backup e restauração](documentacao/REPRODUCAO_MULTIPLATAFORMA.md#6-backup-lógico-e-restauração) · [Demonstração prática](documentacao/GUIA_DEMONSTRACAO_PRATICA.md) · [Notebook ETL 2021](notebooks/etl/etl_vra_anac_2021.ipynb) · [Evidências históricas](resultados/validacoes/integracao_final/)
+
+### Análises do relatório
+
+Com `dw_etl` e `dw_elt` carregados no mesmo banco, execute cada arquivo no DataGrip ou rode os comandos abaixo a partir da raiz. As linhas identificam o fluxo e o ano do CSV de origem. Compare os resultados por fluxo sem somar os dois DWs.
+
+```bash
+psql -X -v ON_ERROR_STOP=1 -f analysis/01_evolucao_voos.sql
+psql -X -v ON_ERROR_STOP=1 -f analysis/02_atrasos_partida.sql
+psql -X -v ON_ERROR_STOP=1 -f analysis/03_companhias_aeroportos.sql
+```
+
+- [Evolução dos voos](analysis/01_evolucao_voos.sql) conta as ocorrências válidas e calcula a variação percentual frente ao ano anterior. O primeiro ano do recorte fica sem base de comparação.
+- [Atrasos nas partidas](analysis/02_atrasos_partida.sql) mede contagens, percentual de atrasos positivos e média em minutos sobre as partidas calculáveis. A média inclui os zeros de antecipações e pontualidade.
+- [Companhias e aeroportos](analysis/03_companhias_aeroportos.sql) mostra as dez primeiras posições por ano e fluxo, com empates. O segundo resultado separa partidas registradas na origem e chegadas registradas no destino.
+
+## Executar os testes
+
+Execute a suíte na raiz com o ambiente Python ativo. Os testes de integração criam clusters sintéticos descartáveis quando encontram `initdb` e `postgres` no PATH. Os testes da carga individual de 2021 e da validação pós-carga do Colab exigem também `ETL_2021_TEST_DATABASE_URL` apontando para um banco descartável e vazio. [Configuração dos testes com PostgreSQL](documentacao/REPRODUCAO_MULTIPLATAFORMA.md#7-testes-e-alcance)
 
 ```bash
 python -m unittest discover -s tests -v
@@ -76,7 +100,8 @@ Para a seleção sem PostgreSQL, use `python -m unittest discover -s tests -p NO
 |---|---|
 | `scripts/` | Preparação, tratamento Pandas, execução e auditoria |
 | `sql/{transformacoes,database,integracao,comparacao}/` | Templates ELT, DDL dimensional, cargas, consultas e comparação |
-| `notebooks/` | Implementações dos integrantes e exploração. Para executar notebooks localmente, instale Jupyter e ipykernel no ambiente de trabalho. |
+| `analysis/` | Consultas independentes para os três resultados do relatório |
+| `notebooks/` | Os notebooks ETL usam o ambiente de `requirements.txt` para execução local. Os notebooks ELT individuais usam o Colab hospedado. |
 | `tests/` | Testes de ingestão, geração SQL, integridade e equivalência |
 | `documentacao/`, `relatorio/` | Guias, modelo dimensional, decisões e resultados medidos |
 

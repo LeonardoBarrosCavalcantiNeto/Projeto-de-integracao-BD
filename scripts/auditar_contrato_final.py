@@ -8,7 +8,7 @@ from contextlib import closing
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from integrar_anac import ROOT,ORIGINAIS,caminho_copy,identifier
-from integracao_final import exact_duplicate_stats,write_csv_rows
+from integracao_final import exact_duplicate_stats,padronizar_ocorrencias,write_csv_rows
 from testar_integracao_isolada import executar
 from espaco_disco import GIB, exigir_espaco
 
@@ -35,7 +35,7 @@ def audit_pandas(output, year, original):
                              keep_default_na=False,chunksize=25000) as batches:
                 for batch in batches:
                     base=batch.loc[~batch.id_raw.isin(extra_ids)]
-                    normalized=original.padronizar_textos(base)[canonical]
+                    normalized=padronizar_ocorrencias(original,base)[canonical]
                     values=normalized.astype(object).where(normalized.notna(),None)
                     db.executemany('INSERT INTO ocorrencia VALUES(?,?,?,?)', (
                         (json.dumps(row,ensure_ascii=False,separators=(',',':')),int(i),name,int(line))

@@ -1,6 +1,8 @@
 # Guia completo de estudo — VRA/ANAC 2019–2021
 
-Este guia acompanha uma ocorrência desde o CSV até os dois Data Warehouses. Para instalar e reproduzir o projeto, siga o [guia de reprodução](REPRODUCAO_MULTIPLATAFORMA.md). Para preparar a fala e as consultas, use o [roteiro de apresentação](ROTEIRO_APRESENTACAO.md) e o [guia de demonstração](GUIA_DEMONSTRACAO_PRATICA.md).
+Este guia acompanha uma ocorrência desde o CSV até os dois Data Warehouses. A instalação e a carga estão no guia de reprodução. As consultas para a exposição estão no guia de demonstração. [Reprodução](REPRODUCAO_MULTIPLATAFORMA.md) · [Demonstração](GUIA_DEMONSTRACAO_PRATICA.md)
+
+O roteiro de apresentação é um material interno da equipe, destinado à preparação da exposição oral, e não faz parte da entrega pública do repositório.
 
 ## 1. O problema e o desenho da solução
 
@@ -122,7 +124,7 @@ A tabela é **histórica**, da execução com os CSVs reais. A validação recen
 ### Pontos que merecem cuidado na defesa
 
 - **A auditoria preserva a referência bruta.** Nos dois fluxos, uma referência válida de outro ano, como `01/01/2020 00:00:00` num CSV de 2021, fica como texto original na anomalia `REFERENCIA_FORA_DE_2021` e como `DATE '2020-01-01'` na fato. A regressão também cobre o formato ISO e o formato brasileiro sem horário, que é inválido pela regra adotada. [Decisão técnica](DECISOES_TECNICAS.md#auditoria-da-referência-fora-do-ano-em-2021) · [Teste integrado](../tests/test_integracao_final.py)
-- **Origens e resumos.** O resumo consolidado `staging_elt.resumo_qualidade` é do ELT. Os resumos do Pandas ficam nos JSONs anuais. Para executar consultas adaptadas a `dw_etl`, separe o último SELECT de `05_analises.sql`, que lê o resumo de staging. A rotina integrada faz essa separação para o ETL. [Análises](../sql/integracao/05_analises.sql) · [Orquestração](../scripts/integracao_final.py)
+- O ELT consolida seus indicadores de qualidade em `staging_elt.resumo_qualidade`. Os resumos do Pandas ficam nos JSONs anuais. As consultas do relatório em `analysis/` leem as estrelas diretamente. [Análises](../README.md#análises-do-relatório) · [Orquestração](../scripts/integracao_final.py)
 - **Ambientes e definições.** Fedora e single-user foram testados. Serviço TCP, download oficial por HTTPS e execução em Windows/macOS têm os limites indicados no guia. O atraso positivo é a definição da consulta do projeto. Fuso e interpretação operacional de referência têm limites documentais. [Portabilidade](../relatorio/PORTABILIDADE.md) · [Contrato v1.1](Contrato_Tratamento_VRA_ANAC_2019_2021_ATUALIZADO.pdf)
 
 ## 5. Mapa dos arquivos
@@ -177,7 +179,8 @@ O mapa cobre os **79 arquivos rastreados presentes** na árvore local antes da c
 | `sql/integracao/02_resolver_descricoes_final.sql` | Snapshot e variantes descritivas com proveniência. | Inserido por `dimension_sql()`. Alimenta companhia e aeroporto na estrela final. |
 | `sql/integracao/03_carga_dw.sql` | Insere membros e fatos com junções, verificações e tratamento de conflitos. | `load_sql()` remapeia para cada DW e usa as métricas próprias. |
 | `sql/integracao/04_validar.sql` | Asserções de conservação, elegibilidade, origem, métricas e relações. | Bundle ELT, roteiro de validação e teste canônico. |
-| `sql/integracao/05_analises.sql` | SELECTs por ano, companhia, aeroporto, mês e qualidade. | Roteiro manual e execução isolada. Adaptar nomes dos schemas para cada fluxo. |
+| `sql/integracao/05_analises.sql` | Template canônico com SELECTs por ano, companhia, aeroporto, mês e qualidade. | O gerador adapta os schemas nas etapas manuais e na execução isolada. |
+| `sql/comparacao/analises_finais.sql` | Ocorrências, atrasos, antecipações, situações, companhias e aeroportos por fluxo. | Executar diretamente com os dois DWs carregados. |
 | `sql/integracao/06_casos_limite.sql` | Exercita funções SQL com calendário inválido, horários fora do intervalo, assentos e valores textuais. | Etapa de validação canônica/ELT. |
 | `sql/integracao/07_diagnosticos.sql` | Diagnósticos de duplicatas, rejeições, horários e origem. | Etapa manual de diagnóstico. |
 | `sql/integracao/08_restricoes.sql` | Obrigatoriedade e checks de proveniência, métricas e fato. | Bundle ELT e trecho adaptado de restrições da fato no bundle ETL. |
@@ -240,7 +243,7 @@ São resultados compactos e registros de auditoria. Sua ausência reduz a capaci
 | `resultados/validacoes/resumo_qualidade_etl_2020.csv` | Indicadores da fase de tratamento individual 2020. |
 | `resultados/validacoes/validacao_postgresql_etl_2020.json` | Evidência da carga experimental de 2020, distinta da conferência dos dois DWs finais. |
 
-**Saídas geradas e arquivos locais.** Os originais e as saídas individuais ficam em `dados/brutos/` e `dados/processados/` ou nos destinos configurados. O bundle final contém `01_elt.psql`, `02_etl.psql`, manifesto e, sob `elt/manual/`, a sequência manual. `.local/` pode guardar clusters, logs e exportações. `backups/`, ambientes virtuais e `.env` são locais. Confira o estado do Git antes de compartilhar. O material descreve a árvore em uso, que ainda tem exclusões e edições pendentes em relação ao HEAD.
+**Saídas geradas e arquivos locais.** Os originais e as saídas individuais ficam em `dados/brutos/` e `dados/processados/` ou nos destinos configurados. O bundle final contém `01_elt.psql`, `02_etl.psql`, manifesto e, sob `elt/manual/`, a sequência manual. `.local/` pode guardar clusters, logs e exportações. `backups/`, ambientes virtuais e `.env` são locais.
 
 ## 6. Ordem de estudo em cinco sessões
 

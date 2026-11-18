@@ -1,6 +1,6 @@
 # Execução final dos três anos
 
-O fluxo ETL lê os originais e aplica funções Pandas do integrante de 2021 (`scripts/etl_vra_anac_2021.py`, branch `origin/feat/etl-2021`, commit `65cf857`). O mesmo contrato é aplicado aos três anos por essa interface reutilizável. As versões individuais de 2019 e 2020 permanecem preservadas. O fluxo ELT reutiliza `integrar_anac.py`, o template parametrizado `sql/transformacoes/elt_2019_2020.sql` para 2019 e 2020 e `sql/transformacoes/elt_2021.sql` para 2021. Não há consumo de linhas tratadas do ELT pelo ETL. O bundle ETL define seus próprios tipos e pode ser instalado sozinho, sem tabelas ELT. As funções auxiliares de ingestão são compartilhadas: o CSV bruto de ingestão alimenta `raw` no ELT e `raw_etl` no ETL, sem tratamento de negócio. As linhas tratadas do ETL vêm exclusivamente dos CSVs Pandas.
+O fluxo ETL lê os originais e aplica funções Pandas de `scripts/etl_vra_anac_2021.py`, incorporado ao repositório a partir do commit original `65cf857`. O mesmo contrato é aplicado aos três anos por essa interface reutilizável. As versões individuais de 2019 e 2020 permanecem preservadas. O fluxo ELT reutiliza `integrar_anac.py`, o template parametrizado `sql/transformacoes/elt_2019_2020.sql` para 2019 e 2020 e `sql/transformacoes/elt_2021.sql` para 2021. O bundle ETL define seus próprios tipos e pode ser instalado sozinho. Os dois fluxos compartilham as funções de ingestão bruta para popular `raw` no ELT e `raw_etl` no ETL. As linhas tratadas do ETL vêm exclusivamente dos CSVs Pandas.
 
 Cada schema `dw_etl` e `dw_elt` possui sete dimensões e uma fato. São schemas separados no mesmo banco PostgreSQL. A granularidade é uma ocorrência válida de etapa de voo após deduplicação exata dos 20 campos contratuais, com chave `(ano_origem,id_raw)`. As dimensões usam chaves substitutas; a comparação as resolve para atributos naturais.
 
@@ -37,9 +37,11 @@ O comando `etl` demonstra apenas Pandas e exportações; a carga dimensional faz
 
 ## Validação funcional com fixtures
 
-Na revisão final da base de código do commit `c9618aa`, os 11 testes passaram no Fedora com Python 3.13.15 e PostgreSQL 18.6. Os dois testes PostgreSQL usaram cinco clusters descartáveis em diretórios temporários, em modo single-user, sem portas nem conexões ao serviço existente.
+Na verificação histórica da base de código do commit `c9618aa`, os 11 testes passaram no Fedora com Python 3.13.15 e PostgreSQL 18.6. Os dois testes PostgreSQL usaram cinco clusters descartáveis em diretórios temporários, em modo single-user, sem portas nem conexões ao serviço existente.
 
 O teste dos seis fluxos comparou RAW, tratados, duplicatas, rejeições, anomalias e fatos por ocorrência, além de verificar sete dimensões e dez chaves estrangeiras válidas por fato. Também exercitou a instalação independente do ETL, a execução manual e a detecção de uma divergência introduzida de propósito. Uma conferência adicional contou 3, 3 e 4 fatos em cada DW para 2019, 2020 e 2021. Os testes usam dados sintéticos. As contagens dos CSVs reais pertencem à [execução histórica validada](../relatorio/STATUS_FINAL_PROJETO.md).
+
+A revisão da entrega executou a suíte consolidada e ampliou a verificação do SQL de demonstração e da entrada do Colab. Os resultados desta revisão estão no [registro de portabilidade](../relatorio/PORTABILIDADE.md#revisão-da-entrega).
 
 ## Conectar ao cluster isolado original
 
@@ -63,7 +65,7 @@ Em banco novo, sem schemas `raw_etl`, `raw`, `staging_elt`, `dw_elt`, `staging_e
 2. Use as etapas em `.local/final/elt/manual/`, em ordem lexicográfica: `01_raw.sql`, `02_importar_raw.psql`, `03_transformar_2019.sql`, `04_transformar_2020.sql`, `04b_transformar_2021.sql`, `05_consolidar_staging.sql`, `06_criar_dw.sql`, `07_dimensoes.sql`, `08_carga_dw.sql`, `09_validar_contrato.sql`, `10_analises.sql`, `11_diagnosticos.sql`. A etapa `.psql` usa `psql -X -v ON_ERROR_STOP=1 -f ARQUIVO`; SQL puro pode ser executado com psql ou no cliente gráfico de sua escolha. As etapas de carga e validação usam transações. As duas consultas finais são somente leitura.
 3. No terminal, execute `psql -X -v ON_ERROR_STOP=1 -f .local/final/02_etl.psql` na mesma conexão. Cria RAW próprio, staging Pandas, dimensões e fato ETL. Também pode ser executado sozinho em banco vazio após `prepare`.
 4. Execute `psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/validar_final.sql`. Qualquer divergência lança exceção; sucesso retorna `COMPARACAO_EXATA_OK`.
-5. Consulte as análises, substituindo `dw.` por `dw_etl.` ou `dw_elt.` e `staging.` por `staging_elt.` em `sql/integracao/05_analises.sql`.
+5. Execute os três SQLs de `analysis/` para apresentar os resultados do relatório. `sql/comparacao/analises_finais.sql` oferece consultas complementares dos dois DWs, e `sql/integracao/05_analises.sql` é o template usado pelo bundle ELT. [Comandos das análises](../README.md#análises-do-relatório)
 
 Alternativa automatizada em banco novo: execute `01_elt.psql` e `02_etl.psql` por `psql`, nessa ordem. Ambos contêm `BEGIN/COMMIT`. Não são scripts de substituição de banco existente; `CREATE SCHEMA` recusa instalação sobre dados anteriores. O antigo `integrar_anac.py apply` continua sendo ferramenta de migração da arquitetura anterior, não é o comando da arquitetura final.
 

@@ -2,7 +2,7 @@
 
 Execute os comandos na raiz do projeto. Os dois DWs são schemas do mesmo banco PostgreSQL 18. O ETL trata os CSVs com Python/Pandas e o ELT trata o RAW em SQL. Consulte o [modelo e o fluxo final](INTEGRACAO_FINAL.md) para detalhes.
 
-Para clonar, siga o comando do [README](../README.md#preparar-e-executar) após a publicação da branch da entrega. Se recebeu um ZIP, abra a pasta que contém `README.md`. Um ZIP gerado por `git archive` inclui os arquivos do commit selecionado. Alterações locais pendentes precisam ser registradas para constar no clone ou no ZIP.
+Para clonar a `main`, siga o comando do [README](../README.md#preparar-e-executar). Se recebeu um ZIP, abra a pasta que contém `README.md`.
 
 ## 1. Instalar ferramentas e criar o ambiente Python
 
@@ -113,14 +113,13 @@ python scripts/integracao_final.py check-load --output .local/reproducao --volum
 psql -X -v ON_ERROR_STOP=1 -f .local/reproducao/01_elt.psql
 psql -X -v ON_ERROR_STOP=1 -f .local/reproducao/02_etl.psql
 psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/validar_final.sql
-psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/validar_restauracao.sql
 ```
 
 `prepare` gera `01_elt.psql`, `02_etl.psql` e `manifesto_final.json`. Antes de carregar, confira esses arquivos. Em ambiente com Bash, use também `python scripts/validar_guia.py --bundle .local/reproducao` para conferir os manifestos e as etapas geradas.
 
 Se a conexão falhar, confira primeiro o serviço, a porta, os valores `PG*` e a autenticação da etapa anterior. Se `psql` informar que um arquivo de `\copy` não existe, confira se está usando o bundle preparado na máquina cliente e se o caminho continua acessível a quem executa `psql`. Se o erro indicar schema existente, confira o banco de destino e a situação da transação antes de repetir a carga.
 
-Cada carga faz uma transação própria. Se a carga ELT terminou e a ETL falhou, corrija a causa, confira se `dw_etl` está ausente e retome a partir de `02_etl.psql`. Execute `validar_final.sql` antes de `validar_restauracao.sql`, pois ele cria as funções de comparação usadas pelo segundo arquivo. As validações esperam `COMPARACAO_EXATA_OK` para 2019, 2020 e 2021 e `RESTAURACAO_OK` para a conciliação de RAW, fatos, dimensões e chaves.
+Cada carga faz uma transação própria. Se a carga ELT terminou e a ETL falhou, corrija a causa, confira se `dw_etl` está ausente e retome a partir de `02_etl.psql`. A comparação espera `DIMENSOES_E_FKS_OK` e `COMPARACAO_EXATA_OK` para 2019, 2020 e 2021. As consultas opcionais do relatório ficam em `analysis/` e podem ser executadas no psql ou em um cliente gráfico. [Comandos das análises](../README.md#análises-do-relatório)
 
 Em cada DW, as contagens esperadas são 982.926 fatos em 2019, 481.909 em 2020 e 606.637 em 2021, totalizando **2.071.472**. Em um banco já carregado, esta consulta confere os números sem reimportar dados.
 
@@ -137,7 +136,7 @@ No pgAdmin, DBeaver, DataGrip ou outro cliente, escolha o driver PostgreSQL. Use
 
 ## 6. Backup lógico e restauração
 
-Use clientes 18 e um banco de restauração novo. Antes de copiar, consulte `SELECT pg_database_size(current_database());`. Reserve no volume do dump pelo menos o tamanho atual do banco como estimativa conservadora, e no volume do servidor espaço para os objetos restaurados, índices, WAL e temporários. Para dimensionar uma restauração com o bundle preparado, use também `check-load` como margem conservadora para o volume do servidor. Quando os destinos compartilham um volume, some as estimativas e preserve os 8 GiB de reserva. Para um caminho existente, confira bytes livres com `python -c "import shutil,sys; print(shutil.disk_usage(sys.argv[1]).free)" "CAMINHO"`.
+Use clientes 18 e um banco de restauração novo. Execute `validar_final.sql` no banco de origem antes do dump, de modo que as funções necessárias para `validar_restauracao.sql` sejam incluídas. Antes de copiar, consulte `SELECT pg_database_size(current_database());`. Reserve no volume do dump pelo menos o tamanho atual do banco como estimativa conservadora, e no volume do servidor espaço para os objetos restaurados, índices, WAL e temporários. Para dimensionar uma restauração com o bundle preparado, use também `check-load` como margem conservadora para o volume do servidor. Quando os destinos compartilham um volume, some as estimativas e preserve os 8 GiB de reserva. Para um caminho existente, confira bytes livres com `python -c "import shutil,sys; print(shutil.disk_usage(sys.argv[1]).free)" "CAMINHO"`.
 
 Crie previamente a pasta local `backups` com acesso privado. Use um nome de arquivo novo e guarde o hash para conferir antes de restaurar.
 
@@ -159,11 +158,13 @@ pg_restore --exit-on-error --single-transaction --no-owner --no-acl --dbname=ana
 psql -X -v ON_ERROR_STOP=1 -d anac_repro_restore -f sql/comparacao/validar_restauracao.sql
 ```
 
-O dump lógico permite transportar ambos os DWs. Os papéis são provisionados no destino e permissões de acesso adicionais são aplicadas ali. O backup físico histórico em [INTEGRACAO_FINAL.md](INTEGRACAO_FINAL.md) serve à recuperação do ambiente original.
+O dump lógico permite transportar ambos os DWs. O script retorna `RESTAURACAO_OK` após conciliar RAW, fatos, dimensões e chaves. Os papéis são provisionados no destino e permissões de acesso adicionais são aplicadas ali. O backup físico histórico em [INTEGRACAO_FINAL.md](INTEGRACAO_FINAL.md) serve à recuperação do ambiente original.
 
 ## 7. Testes e alcance
 
-O comando `python -m unittest discover -s tests -v` usa CSVs sintéticos e cria clusters de teste pequenos, com `postgres` e `initdb` no PATH e sem privilégios de administrador. A suíte usa diretórios temporários novos e executa o PostgreSQL em modo single-user, sem abrir portas. Se necessário, aponte `TMPDIR` no macOS/Linux ou `TEMP` e `TMP` no Windows a uma pasta existente com espaço livre. A reserva de 8 GiB descrita na seção de preparação e carga é aplicada pela CLI ao reproduzir a integração com os dados reais.
+O comando `python -m unittest discover -s tests -v` usa CSVs sintéticos. Com `postgres` e `initdb` no PATH, os testes de integração criam clusters novos em modo single-user, sem abrir portas. Se necessário, aponte `TMPDIR` no macOS/Linux ou `TEMP` e `TMP` no Windows a uma pasta existente com espaço livre. A CLI de reprodução aplica a reserva de 8 GiB descrita na seção de preparação e carga.
+
+Os testes opcionais de carga individual do ETL 2021 e validação pós-carga exigem a variável `ETL_2021_TEST_DATABASE_URL`. Aponte para um banco descartável e vazio chamado `etl_2021_test` ou `etl_test`, criado exclusivamente para a suíte. Esses testes recriam o schema `etl_2021`. Sem a variável, as duas classes são ignoradas e o restante da suíte segue normalmente.
 
 No Windows, a suíte pula a comparação byte a byte das reexportações do utilitário single-user, pois o PostgreSQL grava CRLF ao exportar para um arquivo no servidor. A suíte conserva as verificações SQL de conteúdo e rastreabilidade. [Comportamento de COPY](https://www.postgresql.org/docs/18/sql-copy.html)
 

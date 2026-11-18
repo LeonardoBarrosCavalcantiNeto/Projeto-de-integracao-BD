@@ -1,6 +1,6 @@
 # Entrega final VRA/ANAC — 2019, 2020 e 2021
 
-**Seis pipelines executados e validados com 36 CSVs reais no PostgreSQL 18.6 isolado.** Os dois DWs têm 2.071.472 fatos cada. A comparação integral de ocorrência e conteúdo encontrou zero divergências entre ETL e ELT.
+**Execução histórica dos seis pipelines com 36 CSVs reais no PostgreSQL 18.6 isolado.** Os dois DWs registraram 2.071.472 fatos cada. A comparação integral de ocorrência e conteúdo encontrou zero divergências entre ETL e ELT. A revisão atual verificou a reprodução com fixtures em clusters descartáveis. [Verificações da revisão](PORTABILIDADE.md#revisão-da-entrega)
 
 | Ano | ETL Pandas | ELT PostgreSQL | RAW por fluxo | Excedentes | Rejeições | `dw_etl` | `dw_elt` | Divergências |
 |---|---|---|---:|---:|---:|---:|---:|---:|
@@ -60,19 +60,19 @@ A partir da raiz Git, use Python 3.11 ou superior, as dependências de `requirem
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-Com os dois DWs já carregados, `.venv/bin/python scripts/integracao_final.py compare` refaz somente a comparação. `--ano` permite retomar um ano. O checkpoint de retomada e os logs completos ficam em `.local/final/PROGRESSO.md` e `.local/final/`.
+Com os dois DWs já carregados em um cluster single-user, `.venv/bin/python scripts/integracao_final.py compare` refaz a comparação. `--ano` permite retomar um ano. O checkpoint e os logs da execução original foram mantidos no ambiente histórico.
 
-O modo single-user foi usado na validação. Para demonstrar no DataGrip, o guia mostra como iniciar o cluster isolado em `127.0.0.1:55439`, banco `postgres`, com o usuário proprietário (`efsr` neste computador). A sequência SQL manual foi testada. A conexão gráfica e o servidor nativo na porta 5432 ficaram fora da validação, pois o ambiente bloqueou sockets. O banco nativo e o container da porta 5433 foram preservados.
+O modo single-user foi usado na validação original. A sequência SQL manual foi testada. Em uma conferência posterior, o responsável consultou o cluster preservado no DataGrip e confirmou a presença dos dois DWs e as contagens por ano. Para reproduzir a conexão, consulte o [guia multiplataforma](../documentacao/REPRODUCAO_MULTIPLATAFORMA.md#5-conectar-um-cliente-postgresql).
 
 ## Arquivos, Git e publicação
 
 A retomada atualizou `scripts/integracao_final.py`, `scripts/evidencias_final.py`, `scripts/testar_integracao_isolada.py`, `sql/comparacao/validar_final.sql`, `scripts/backup_cluster_isolado.py`, os testes e os guias. Acrescentou `scripts/auditar_contrato_final.py`, `sql/comparacao/validar_restauracao.sql`, `scripts/espaco_disco.py`, `tests/test_espaco_disco.py`, os relatórios e evidências compactas.
 
-Branch local `integracao-final-etl-elt-2019-2021`. A validação em lotes está no commit `1bebb0e` e as verificações de espaço estão no commit `a25a7ff`. O commit da entrega validada foi `86ffb99`. **Nenhum push ou alteração remota foi realizado.** A publicação cabe exclusivamente ao responsável após a revisão.
+A execução histórica foi registrada no commit `86ffb99`. A validação em lotes está no commit `1bebb0e` e as verificações de espaço estão no commit `a25a7ff`. O repositório público consolida o trabalho do grupo na `main`, incluindo as validações e os testes do PR #11.
 
 Dados brutos e tratados completos, credenciais, logs temporários, clusters, ZIPs locais e backups ficam fora do Git.
 
-## Armazenamento
+## Armazenamento na execução histórica
 
 O volume da entrega tinha **9,38 GiB livres** no início da verificação de disco e **20,80 GiB livres** ao consolidar os resultados. Foram removidos **11,42 GiB** de dados regeneráveis. O repositório ocupava 44,26 GiB na primeira medição, ou 44,91 GiB incluindo as bases irmãs do projeto. Havia 6.826.501 inodes livres.
 
@@ -81,6 +81,6 @@ O volume da entrega tinha **9,38 GiB livres** no início da verificação de dis
 | `.local/final/restauracao_20261117_195714_156109` | 10,40 GiB | Cópia do teste de restauração com RESTAURACAO_OK. O ambiente carregado e o arquivo físico validado foram preservados. |
 | `.local/final/postgres_tentativa_sem_resolucao` | 1,02 GiB | Cluster desligado da tentativa com rollback. O log da falha foi preservado e a instalação seguinte foi validada. |
 
-Os maiores consumidores preservados são o cluster funcional `.local/final/postgres` (10,40 GiB), os ambientes históricos `.local/integracao` (12,28 GiB) e `.local/guia_validacao` (5,90 GiB), os backups (2,47 GiB, incluindo o backup final restaurável de 1,64 GiB), o RAW preparado (0,74 GiB) e os arquivos Pandas (0,71 GiB). O cluster funcional está desligado com checkpoint limpo e disponível para a revisão no DataGrip. Os artefatos históricos e os originais foram preservados.
+Ao concluir a execução histórica, os maiores consumidores preservados eram o cluster funcional `.local/final/postgres` (10,40 GiB), os ambientes `.local/integracao` (12,28 GiB) e `.local/guia_validacao` (5,90 GiB), os backups (2,47 GiB, incluindo o backup final restaurável de 1,64 GiB), o RAW preparado (0,74 GiB) e os arquivos Pandas (0,71 GiB). O cluster funcional terminou com checkpoint limpo.
 
 As operações pesadas no terminal agora verificam a reserva de 8 GiB além do pico estimado. A exportação de evidências usa um único CSV RAW temporário por vez. Depois da revisão, avalie separadamente os ambientes históricos e intermediários. Confirme que estão desligados ou sem uso, registre quais evidências precisam continuar acessíveis e preserve uma cópia recuperável antes de remover um diretório comprovadamente redundante. Consulte as medições em bytes e as justificativas no [registro de armazenamento](../resultados/validacoes/integracao_final/armazenamento.json).

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from contextlib import closing
 import csv
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
@@ -138,7 +139,7 @@ def comparar(inventario_etl, inventario_elt, tratada_etl, tratada_elt):
     campos_divergentes = Counter()
     exemplos_valores, exemplos_somente_elt = [], []
     with tempfile.TemporaryDirectory(prefix='comparacao-vra-2021-') as temporario:
-        with sqlite3.connect(str(Path(temporario) / 'origens.sqlite')) as conexao:
+        with closing(sqlite3.connect(Path(temporario) / 'origens.sqlite')) as conexao, conexao:
             conexao.execute('CREATE TABLE etl (arquivo TEXT, linha INTEGER, valores TEXT, visto INTEGER DEFAULT 0, PRIMARY KEY (arquivo, linha)) WITHOUT ROWID')
             conexao.execute('CREATE TABLE elt (arquivo TEXT, linha INTEGER, PRIMARY KEY (arquivo, linha)) WITHOUT ROWID')
             for chave, valores in ler_tratada(tratada_etl, hashes_etl):
