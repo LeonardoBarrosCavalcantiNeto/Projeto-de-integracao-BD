@@ -69,7 +69,7 @@ Alternativa automatizada em banco novo: execute `01_elt.psql` e `02_etl.psql` po
 
 Para conferir o roteiro e os arquivos gerados antes de conectar ao banco, use `python scripts/validar_guia.py --bundle .local/final`. Informe o mesmo diretório passado a `prepare --output`, se tiver usado outro. O validador confere a ordem manual, os metacomandos e os hashes disponíveis no manifesto. Os hashes manuais do manifesto canônico descrevem a versão anterior ao remapeamento para os schemas finais.
 
-Se uma etapa SQL falhar dentro de uma transação, execute `ROLLBACK` na mesma sessão antes de corrigir o erro. Em um cliente gráfico, execute os arquivos SQL puros completos e use o terminal para a etapa de importação `.psql`. Se o CSV informado em `\\copy` estiver ausente após mover o bundle, gere-o novamente no local de execução.
+Se uma etapa SQL falhar dentro de uma transação, execute `ROLLBACK` na mesma sessão antes de corrigir o erro. Em um cliente gráfico, execute os arquivos SQL puros completos e use o terminal para a etapa de importação `.psql`. Se o CSV informado em `\copy` estiver ausente após mover o bundle, gere-o novamente no local de execução.
 
 ## Rastreabilidade e contrato
 
