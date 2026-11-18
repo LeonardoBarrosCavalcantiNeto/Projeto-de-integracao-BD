@@ -1,7 +1,8 @@
+
 -- ELT __ANO__. Executar depois da carga bruta; nunca altera os 20 campos brutos.
 CREATE OR REPLACE FUNCTION __SCHEMA_ELT__.limpar_texto(valor TEXT)
 RETURNS TEXT LANGUAGE SQL IMMUTABLE STRICT AS $$
-    SELECT NULLIF(regexp_replace(valor, '^\\s+|\\s+$', '', 'g'), '');
+    SELECT NULLIF(regexp_replace(valor, '^\s+|\s+$', '', 'g'), '');
 $$;
 
 CREATE OR REPLACE FUNCTION __SCHEMA_ELT__.datahora_segura(valor TEXT)
