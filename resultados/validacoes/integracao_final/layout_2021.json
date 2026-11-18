@@ -1,0 +1,86 @@
+[
+  {
+    "arquivo": "VRA_2021_01.csv",
+    "colunas": 21,
+    "codeshare_presente": true,
+    "codeshare_preenchido": 23061,
+    "registros": 61920
+  },
+  {
+    "arquivo": "VRA_2021_02.csv",
+    "colunas": 21,
+    "codeshare_presente": true,
+    "codeshare_preenchido": 18763,
+    "registros": 46078
+  },
+  {
+    "arquivo": "VRA_2021_03.csv",
+    "colunas": 21,
+    "codeshare_presente": true,
+    "codeshare_preenchido": 19217,
+    "registros": 41701
+  },
+  {
+    "arquivo": "VRA_2021_04.csv",
+    "colunas": 20,
+    "codeshare_presente": false,
+    "codeshare_preenchido": 0,
+    "registros": 30224
+  },
+  {
+    "arquivo": "VRA_2021_05.csv",
+    "colunas": 20,
+    "codeshare_presente": false,
+    "codeshare_preenchido": 0,
+    "registros": 37341
+  },
+  {
+    "arquivo": "VRA_2021_06.csv",
+    "colunas": 20,
+    "codeshare_presente": false,
+    "codeshare_preenchido": 0,
+    "registros": 42512
+  },
+  {
+    "arquivo": "VRA_2021_07.csv",
+    "colunas": 21,
+    "codeshare_presente": true,
+    "codeshare_preenchido": 15357,
+    "registros": 55555
+  },
+  {
+    "arquivo": "VRA_2021_08.csv",
+    "colunas": 20,
+    "codeshare_presente": false,
+    "codeshare_preenchido": 0,
+    "registros": 56367
+  },
+  {
+    "arquivo": "VRA_2021_09.csv",
+    "colunas": 21,
+    "codeshare_presente": true,
+    "codeshare_preenchido": 15577,
+    "registros": 58362
+  },
+  {
+    "arquivo": "VRA_2021_10.csv",
+    "colunas": 20,
+    "codeshare_presente": false,
+    "codeshare_preenchido": 0,
+    "registros": 61288
+  },
+  {
+    "arquivo": "VRA_2021_11.csv",
+    "colunas": 21,
+    "codeshare_presente": true,
+    "codeshare_preenchido": 4219,
+    "registros": 66649
+  },
+  {
+    "arquivo": "VRA_2021_12.csv",
+    "colunas": 21,
+    "codeshare_presente": true,
+    "codeshare_preenchido": 16285,
+    "registros": 74151
+  }
+]
