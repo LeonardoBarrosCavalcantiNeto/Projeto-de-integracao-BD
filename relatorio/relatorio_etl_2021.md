@@ -1,198 +1,43 @@
-# Relatório técnico — ETL VRA/ANAC 2021
+# ETL dos dados VRA/ANAC — 2021
 
-**Responsável ETL:** Arthur. **Responsável ELT:** Murilo Acioli.
-**Contrato:** VRA/ANAC 2019–2021, versão 1.1.
-**Escopo:** camada tratada, auditorias, rastreabilidade e carga PostgreSQL opcional.
-Dimensões e Fato serão integradas coletivamente.
+> **Nota histórica.** A execução salva no notebook abrange a extração, a transformação e a exportação das saídas. A carga no PostgreSQL e a comparação integral entre os DWs são comprovadas pelas evidências da integração final. [Relatório final do projeto](STATUS_FINAL_PROJETO.md)
 
-## Resultado medido
+## Objetivo e fonte
 
-| Etapa | Registros |
+Tratar os registros de etapas de voo dos 12 CSVs mensais do VRA/ANAC, de `VRA_2021_01.csv` a `VRA_2021_12.csv`, segundo o contrato v1.1. O script individual usa Python e Pandas para extrair e transformar os dados. O notebook configura a execução e apresenta as auditorias. [Manifesto VRA](../dados/manifesto_vra.json) · [Notebook ETL 2021](../notebooks/etl/etl_vra_anac_2021.ipynb) · [Script ETL 2021](../scripts/etl_vra_anac_2021.py)
+
+## Extração, tratamento e auditorias
+
+1. **Leitura.** O script verifica os arquivos mensais e seus cabeçalhos, lê os CSVs com separador `;` e codificação `utf-8-sig` e mantém os campos como texto na entrada. O inventário registra os hashes. Ano, arquivo e posição lógica do registro identificam a origem.
+2. **Layout.** Sete arquivos têm a coluna adicional `Codeshare`. A execução individual registrou 112.479 valores preenchidos. O campo é preservado na base bruta e o critério de duplicata exata usa os 20 campos do contrato. Repetições potenciais após a normalização são auditadas, sem exclusão automática.
+3. **Padronização.** O Pandas aplica o mapeamento canônico, remove espaços nas extremidades, normaliza a caixa dos campos previstos e converte vazios em nulos. O número do voo continua textual. A conversão valida horários e assentos e aceita `AAAA-MM-DD` e `DD/MM/AAAA 00:00:00` para `Referência`.
+4. **Elegibilidade.** Companhia, aeroportos de origem e destino e horários previstos válidos são obrigatórios. O script mantém os motivos associados a cada ocorrência rejeitada. Problemas em campos opcionais são tratados e auditados sem provocar rejeição por si sós.
+5. **Métricas.** A diferença entre horário real e previsto conserva o sinal. O atraso é zero em antecipações e nulo quando falta o horário real. Diferenças absolutas acima de 24 horas são sinalizadas e preservadas. Partidas previstas fora do ano de origem e descrições conflitantes por código também são auditadas.
+
+[Contrato de tratamento v1.1](../documentacao/Contrato_Tratamento_VRA_ANAC_2019_2021_ATUALIZADO.pdf) · [Implementação em Python](../scripts/etl_vra_anac_2021.py) · [Layout de 2021](../resultados/validacoes/integracao_final/layout_2021.json)
+
+## Resultados e validação de qualidade
+
+| Indicador | Resultado do notebook |
 |---|---:|
-| Extração bruta | 632.148 |
-| Excedentes de duplicação exata | 0 |
-| Rejeitados após deduplicação | 25.511 |
-| Tratados | 606.637 |
-| Excedentes inválidos, apenas diagnóstico | 0 |
+| Registros brutos | 632.148 |
+| Ocorrências duplicadas excedentes | 0 |
+| Registros rejeitados | 25.511 |
+| Registros tratados | 606.637 |
+| Partidas com diferença absoluta acima de 24 h | 371 |
+| Chegadas com diferença absoluta acima de 24 h | 373 |
+| Partidas reais nulas | 26.139 |
+| Chegadas reais nulas | 26.141 |
+| Partidas previstas fora de 2021 | 15 |
 
-A conciliação anual e as 12 conciliações mensais passaram:
-**bruta = excedentes + rejeições + tratada**. Os números de referência são
-comparados ao resultado, sem impor contagens ao processamento.
-Os 25.511 rejeitados apresentam ausência dos dois horários previstos; cada
-registro guarda os dois motivos. Isso não transforma 25.511 rejeições em 51.022.
+A saída salva registra conciliação por arquivo e no ano, com `632.148 = 0 + 25.511 + 606.637`. As 25.511 rejeições têm os dois motivos de ausência de horário previsto. São duas contagens de motivos para o mesmo conjunto de registros rejeitados. O notebook conferiu a igualdade dos totais com os valores informados para o ELT de 2021. A verificação por ocorrência ficou para a integração final. [Notebook ETL 2021](../notebooks/etl/etl_vra_anac_2021.ipynb) · [Qualidade anual](QUALIDADE_2019_2021.md)
 
-As evidências locais versionadas foram geradas com IPython e Python da `.venv`.
-O notebook atual tem nove células de código e prepara também uma sessão Colab.
-Arthur compartilhou as saídas de uma execução hospedada em 17/11/2026:
-PostgreSQL 16.15, commit `e910c58`, dez contagens confirmadas após COMMIT,
-origens únicas e conciliação mensal aprovadas. O notebook executado e os quatro
-arquivos de evidências dessa sessão ainda precisam ser incorporados à entrega;
-nenhum arquivo de execução local é apresentado como evidência do Colab.
+## Carga PostgreSQL e modelo dimensional
 
-## Extração e preservação
+O script individual prevê carga transacional via SQLAlchemy e driver psycopg das tabelas tratadas e de auditoria no schema `etl_2021`. A saída salva registra `PostgreSQL: nao_executada`, portanto a execução individual comprova até a exportação local. A construção da fato e das dimensões ficou a cargo da integração do grupo. [Script ETL 2021](../scripts/etl_vra_anac_2021.py) · [Notebook ETL 2021](../notebooks/etl/etl_vra_anac_2021.ipynb)
 
-`scripts/etl_vra_anac_2021.py` concentra a implementação; o notebook apenas
-configura, executa e apresenta evidências. `run_etl()` mantém sua assinatura.
+Na integração, o tratamento continua no Pandas. O PostgreSQL preserva a origem em `raw_etl`, recebe as saídas tratadas em `staging_etl` e carrega `dw_etl.fato_voo`. A fato referencia sete dimensões compartilhadas pelos três anos e representa uma ocorrência elegível de etapa de voo. A comparação integral registra **606.637 fatos de 2021 em cada DW**, rastreabilidade verificada e **zero divergências de conteúdo** no ano. [Integração final](../documentacao/INTEGRACAO_FINAL.md) · [Modelo dimensional](../documentacao/MODELO_DIMENSIONAL_FINAL.md) · [Comparação integral](../resultados/validacoes/integracao_final/comparacao_integral.json)
 
-A leitura exige exatamente os 12 nomes mensais de 2021. São aceitos os 20 campos
-comuns, na ordem do contrato, ou esses mesmos campos seguidos de `Codeshare`.
-Mês com apenas cabeçalho é válido. Arquivo sem cabeçalho, cabeçalho divergente,
-registro incompleto e registro com campos excedentes provocam falha.
-A leitura por `csv.reader` e a leitura pelo Pandas precisam conciliar.
+## Considerações finais
 
-Os 12 CSVs são copiados byte a byte para `vra_bruta/`, com verificação dos hashes
-antes e depois. `manifesto_sha256.csv` registra os hashes dos originais e das
-cópias. `--export-raw` produz adicionalmente `vra_bruta.csv.gz`, uma representação
-tabular regenerada com metadados; ela não substitui os originais.
-
-`Codeshare` existe em janeiro, fevereiro, março, julho, setembro, novembro e
-dezembro; soma 112.479 valores preenchidos. Trata-se de uma variação de esquema
-preservada e auditada. A simples presença dessa coluna não demonstra deslocamento
-das demais: larguras e contagens dos arquivos foram verificadas. Ela não compõe
-os 20 atributos comuns usados no tratamento.
-
-## Deduplicação e auditoria
-
-A chave de duplicação são os 20 campos **brutos**, antes de TRIM, UPPER ou conversão.
-Preserva-se a primeira origem em ordem estável por arquivo e registro lógico.
-`Codeshare` e metadados não participam dessa comparação.
-
-Cada excedente registra `grupo_duplicata_id`, `quantidade_ocorrencias`,
-`arquivo_preservado`, `linha_preservada`, `invalido_diagnostico` e
-`motivo_rejeicao_diagnostico`. O identificador é determinístico para a mesma
-entrada ordenada; não é uma chave dimensional permanente. A quantidade inclui
-o representante. A interseção dos excedentes com inválidos é apenas diagnóstica;
-não entra novamente como rejeição na equação.
-
-`vra_possiveis_duplicatas_padronizacao.csv.gz` reúne registros que ficam iguais
-após TRIM/UPPER. Eles são preservados. A auditoria adicional após conversão
-continua em `duplicatas_apos_padronizacao.csv.gz`. Nenhuma das duas remove linhas.
-No conjunto real, as duas contagens de excedentes potenciais são zero.
-
-## Transformações e rastreabilidade
-
-- Vazios tornam-se nulos e espaços externos são removidos. Códigos e situações
-  ficam em maiúsculas; nomes e descrições preservam a grafia.
-- `numero_voo` permanece texto, inclusive com zeros à esquerda.
-- Os quatro horários aceitam `dd/mm/aaaa HH:MM` com validação de calendário.
-  A precisão em microssegundos preserva anos válidos fora do intervalo de
-  timestamps em nanossegundos. Nenhuma conversão de fuso é aplicada aos voos.
-- `referencia` aceita `aaaa-mm-dd` ou `dd/mm/aaaa 00:00:00`.
-- Assentos aceitam somente inteiros não negativos no intervalo de inteiro de 32 bits.
-- Somente companhia ICAO, aeroportos de origem e destino e os dois horários
-  previstos são obrigatórios. Cada rejeição guarda **todos** os motivos.
-- Opcionais inválidos tornam-se nulos e geram anomalias por campo; não rejeitam
-  sozinhos o registro. Referências fora do ano também são auditadas.
-
-Rejeições e anomalias incluem os campos canônicos e o retrato original com
-prefixo `bruto__` e nomes canônicos, por exemplo `bruto__partida_prevista`.
-A presença de Codeshare na fonte também é preservada. `motivo_rejeicao` é uma
-lista JSON no CSV e um array de texto no PostgreSQL. Anomalias identificam
-`campo`, `campo_original`, `valor_original` e `motivo`.
-
-Cada registro carrega `arquivo_origem`, `linha_origem`, `ano_origem`,
-`data_carga` UTC, `pipeline=ETL` e `versao_contrato=1.1`. `linha_origem` conta
-registros lógicos do CSV, com cabeçalho na posição 1. `etl_log_arquivos.csv`
-reúne hashes, contagens, diagnóstico e conciliação por mês.
-
-## Métricas e casos preservados
-
-Para partida e chegada, diferença em minutos é **real − prevista**;
-atraso é `max(diferença, 0)`. Sem horário real, ambas as métricas permanecem
-nulas. A flag atípica é verdadeira somente para diferença absoluta **maior**
-que 1.440 minutos; sem real, a flag é falsa.
-
-Foram preservadas 371 partidas e 373 chegadas atípicas. Há 26.139 partidas
-reais nulas e 26.141 chegadas reais nulas. São 15 partidas previstas fora de
-2021, preservadas com `partida_ano_diverge_flag=True` e também exportadas na
-auditoria própria. Não há ocorrências na auditoria de opcionais nesta execução.
-
-## Conflitos de descrição
-
-Nove códigos apresentam duas descrições cada, totalizando 18 variantes:
-
-| Tipo | Códigos |
-|---|---|
-| Aeroporto | KAEX, SWHP, SYEC |
-| Companhia | CQB, DTA, ETH, ETR, OWT, QTR |
-
-A auditoria combina os papéis de origem e destino dos aeroportos e contabiliza
-as ocorrências de cada descrição. Nenhum nome foi escolhido arbitrariamente.
-A resolução deve ser coletiva antes da publicação das dimensões.
-As variantes estão em `resultados/validacoes/conflitos_codigo_etl_2021.csv`.
-
-## PostgreSQL
-
-A carga recebe as dez tabelas já preparadas em Python. Usa exclusivamente o
-schema `etl_2021`, verifica contagens e cria chaves primárias de origem onde
-cada registro deve ser único. O log tem chave pelo arquivo. Anomalias podem
-conter vários campos do mesmo voo e, por isso, repetem a origem legitimamente.
-
-Sem substituição explícita, a presença de qualquer tabela deste pipeline bloqueia
-a carga. Com substituição, remoção e recriação ocorrem na mesma transação.
-Uma falha reverte a transação e preserva a carga anterior. O status só informa
-sucesso após o COMMIT; cada chamada reinicializa o status e os metadados para
-não reaproveitar sucesso antigo. Falhas registram o tipo do erro, sem credenciais.
-
-Os testes de integração foram executados em PostgreSQL 17 real, num contêiner
-Docker temporário isolado. Cobrem contagens, repetição bloqueada, substituição,
-rollback após falha injetada e tipos das auditorias não vazias. A carga completa
-também é registrada na evidência PostgreSQL, com contagens consultadas após o
-COMMIT. Esse banco temporário não é o banco compartilhado da entrega.
-
-No notebook, a carga fica desabilitada por padrão na execução local e habilitada
-no Colab. A instalação automática do PostgreSQL exige uma sessão hospedada.
-Os testes locais de integração usam um banco temporário separado.
-
-## Testes e comparação com ELT
-
-A suíte usa `unittest`, sem dependência nova. Execute
-`python -m unittest discover -s tests -v`. Os seis testes de integração PostgreSQL exigem
-`ETL_2021_TEST_DATABASE_URL` para um banco dedicado `etl_test` ou `etl_2021_test`;
-sem essa variável são explicitamente pulados. O README descreve a configuração.
-
-O comparador verifica hashes dos 12 arquivos e presença e valores por
-`arquivo_origem + linha_origem`, sem presumir equivalência por totais.
-Compara os 20 atributos canônicos, ano, quatro métricas e três flags.
-Normaliza datas, números, booleanos e marcadores de nulo; nulo continua
-diferente de zero e `0035` continua diferente de `35`. Se a flag anual não vier
-no ELT, deriva-a de partida prevista e ano de origem, registrando essa decisão.
-`data_carga`, `pipeline` e `versao_contrato` não entram na igualdade dos valores.
-O SQLite temporário evita manter as duas bases completas na RAM.
-
-Os testes do comparador cobrem valores divergentes com totais iguais, hashes
-diferentes, nulo versus zero, normalização, origens ausentes, origens repetidas e
-campos ausentes. A regressão antes/depois usa somente a própria base ETL anterior;
-ela **não** comprova equivalência com o ELT do Murilo.
-
-**Inventários conferidos:** o inventário do ELT foi recuperado do commit
-`b6c6b463e0eadb76be86a72415d3eb288610d0d0`, referência `origin/integracao-elt`, sem
-trocar de branch ou fazer merge. Os arquivos de ELT 2021 examinados também são
-iguais aos da `origin/main` consultada. Nos 12 meses, SHA-256, tamanho em bytes e
-quantidade de registros coincidem com o inventário do ETL.
-
-`comparacao_etl_elt_2021.json` registra o commit de origem, os hashes dos dois
-inventários e a conferência por mês. Os metadados incluem o horário dessa
-verificação posterior, preservando os horários da execução original do ETL.
-
-**Comparação dos valores com Murilo: pendente.** A tabela tratada completa não
-está versionada nas branches examinadas. O notebook dele contém
-`EXPORTAR_TRATADA_COMPLETA=False`. É preciso obter a exportação completa ou
-reproduzir o ELT num banco isolado, identificando essa saída como reprodução
-local. A igualdade dos inventários e dos totais não fecha a comparação por
-registro; essa etapa continua explicitamente pendente no JSON.
-
-## Pendências de fechamento
-
-1. Obter a tabela tratada completa do ELT e executar o comparador por origem e
-   valores; o inventário com hashes já foi obtido e conferido.
-2. Incorporar e conferir o notebook executado e o ZIP de evidências da sessão
-   Colab cujas saídas foram compartilhadas por Arthur. O relato confirma a carga;
-   os artefatos completos da reprodução ainda não foram incorporados.
-3. Resolver os nove conflitos e integrar dimensões e Fato com o grupo.
-4. Revisar a integração com a `main` e a mensagem do commit antes da publicação.
-   A branch original `feat/etl-2021` mantém os commits individuais de Arthur.
-
-A comparação dos valores com o ELT e a incorporação das evidências completas
-do Colab continuam pendentes. As saídas compartilhadas da sessão hospedada
-não substituem o arquivamento dos artefatos dessa execução.
+A execução individual documenta as particularidades de layout e a conciliação dos CSVs de 2021 após a aplicação do contrato. A carga opcional pelo notebook permanece sem confirmação nas saídas salvas. A carga dimensional integrada e sua equivalência com o ELT têm evidências próprias. [Qualidade anual](QUALIDADE_2019_2021.md) · [Relatório final do projeto](STATUS_FINAL_PROJETO.md)
