@@ -1,2 +1,0 @@
-ano_origem,bruta,duplicatas_excedentes,intersecao_excedentes_duplicados_invalidos,rejeicoes,tratada,grupos_duplicados,registros_envolvidos_duplicatas,duplicatas_apos_trim_upper,duplicatas_apos_padronizacao,partidas_atipicas,chegadas_atipicas,partidas_reais_nulas,chegadas_reais_nulas,ocorrencias_anomalias,partidas_previstas_fora_do_ano,codigos_com_conflito,arquivos_com_codeshare,codeshare_preenchido,executado_em
-2021,632148,0,0,25511,606637,0,0,0,0,371,373,26139,26141,0,15,9,7,112479,2026-11-17T12:38:35.487138+00:00
