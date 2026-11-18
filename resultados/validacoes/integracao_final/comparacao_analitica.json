@@ -1,0 +1,10 @@
+{
+  "fato": true,
+  "indicadores": true,
+  "companhias": true,
+  "mensal": true,
+  "aeroportos_origem": true,
+  "aeroportos_destino": true,
+  "nulos": true,
+  "dimensoes": true
+}
