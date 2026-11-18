@@ -1,5 +1,7 @@
 # ELT dos dados VRA/ANAC — 2021
 
+> **Nota histórica.** Este relatório registra os procedimentos e resultados da entrega individual. A carga dimensional, a integração de 2019 a 2021 e a comparação integral entre ETL e ELT foram concluídas posteriormente pelo pipeline integrado. Consulte o [relatório final do projeto](STATUS_FINAL_PROJETO.md).
+
 Responsável: Murilo Acioli.
 Base: notebook ELT de 2020 (Gustavo José Arraes de Queiroz),
 derivado do ELT de 2019 do grupo.
@@ -178,7 +180,9 @@ Executar `notebooks/elt/elt_2021.ipynb` no Colab, em ordem
 O SQL separado está em `sql/transformacoes/elt_2021.sql`
 e pressupõe a carga bruta criada pelo notebook.
 
-As evidências estão em:
+O notebook gera as evidências abaixo. Na entrega simplificada, os resumos individuais permanecem versionados e as exportações detalhadas são regeneradas pela execução das células de exportação. As orientações históricas dos notebooks para publicar CSVs correspondem à entrega individual. Consulte o [inventário e os comandos de regeneração](LIMPEZA_RESULTADOS.md).
+
+Os destinos das exportações são:
 
 - `resultados/logs/`: inventário (com SHA-256) e metadados.
 - `resultados/rejeicoes/`: motivos de rejeição e duplicatas. O CSV

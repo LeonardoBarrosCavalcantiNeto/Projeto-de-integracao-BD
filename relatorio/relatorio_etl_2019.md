@@ -1,5 +1,7 @@
 # Relatório técnico — ETL VRA/ANAC 2019
 
+> **Nota histórica.** As pendências e os testes descritos neste relatório correspondem à implementação individual de 2019. A execução com dados reais, a carga dimensional e a conciliação com o ELT foram validadas posteriormente no pipeline integrado dos três anos. Consulte o [relatório final do projeto](STATUS_FINAL_PROJETO.md).
+
 **Contrato de referência:** Contrato Único de Dados e Tratamento VRA/ANAC, versão 1.1, atualizado em 11/11/2026  
 **Pipeline:** ETL 2019  
 **Situação desta entrega:** código e notebook corrigidos; teste sintético aprovado; execução com os 12 CSVs reais e carga no PostgreSQL ainda pendentes.
@@ -209,7 +211,7 @@ Por segurança, uma carga não substitui tabelas já existentes. Para apagar e r
 python etl_vra_anac_2019.py --input-dir "dados/brutos/2019" --output-dir "dados/processados/2019" --replace
 ```
 
-O notebook `etl_vra_anac_2019.ipynb` executa o mesmo `run_etl` e apresenta as etapas de conferência.
+O notebook [etl_2019.ipynb](../notebooks/etl/etl_2019.ipynb) executa o mesmo `run_etl` e apresenta as etapas de conferência.
 
 ## 11. Testes realizados nesta entrega
 

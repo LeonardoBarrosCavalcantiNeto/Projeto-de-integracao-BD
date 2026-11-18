@@ -156,9 +156,10 @@ CROSS JOIN LATERAL (VALUES
 WHERE elt_2021.limpar_texto(v.valor_original) IS NOT NULL AND v.falhou;
 
 INSERT INTO elt_2021.vra_anomalias
-SELECT arquivo_origem, linha_origem, 'Referência', referencia::TEXT, 'REFERENCIA_FORA_DE_2021'
-FROM elt_2021.vra_convertida
-WHERE referencia IS NOT NULL AND EXTRACT(YEAR FROM referencia) <> 2021;
+SELECT c.arquivo_origem, c.linha_origem, 'Referência', b."Referência", 'REFERENCIA_FORA_DE_2021'
+FROM elt_2021.vra_convertida c
+JOIN elt_2021.vra_bruta b USING (arquivo_origem, linha_origem)
+WHERE c.referencia IS NOT NULL AND EXTRACT(YEAR FROM c.referencia) <> 2021;
 
 -- Contrato v1.1, seção 4: um código ICAO não pode ter descrições diferentes
 -- numa dimensão compartilhada. Aqui só registramos; a decisão é do grupo.
