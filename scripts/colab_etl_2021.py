@@ -42,6 +42,7 @@ def sha256_arquivo(caminho):
 def preparar_entrada_zip(caminho_zip, pasta_dados, inventario_referencia):
     """Confere todo o ZIP antes de copiar os 12 CSVs, sem conversão de bytes.
 
+    Aceita o manifesto JSON do projeto ou o inventário CSV da execução individual.
     Pastas internas são permitidas. CSVs inesperados, meses repetidos/ausentes e
     hashes diferentes bloqueiam a preparação. Arquivos locais diferentes também
     são preservados: nenhuma substituição de brutos é feita implicitamente.
@@ -49,12 +50,16 @@ def preparar_entrada_zip(caminho_zip, pasta_dados, inventario_referencia):
     caminho_zip, pasta_dados = Path(caminho_zip), Path(pasta_dados)
     inventario_referencia = Path(inventario_referencia)
     with inventario_referencia.open(encoding="utf-8-sig", newline="") as entrada:
-        leitor = csv.DictReader(entrada)
-        campos = leitor.fieldnames or []
-        chave = "arquivo" if "arquivo" in campos else "arquivo_origem"
-        if chave not in campos or "sha256" not in campos:
-            raise ValueError("Inventário deve conter arquivo/arquivo_origem e sha256.")
-        linhas = list(leitor)
+        if inventario_referencia.suffix.lower() == ".json":
+            chave = "arquivo_origem"
+            linhas = [item for item in json.load(entrada)["arquivos"] if item["ano_origem"] == 2021]
+        else:
+            leitor = csv.DictReader(entrada)
+            campos = leitor.fieldnames or []
+            chave = "arquivo" if "arquivo" in campos else "arquivo_origem"
+            if chave not in campos or "sha256" not in campos:
+                raise ValueError("Inventário deve conter arquivo/arquivo_origem e sha256.")
+            linhas = list(leitor)
     hashes = {linha[chave]: linha["sha256"] for linha in linhas}
     if len(linhas) != 12 or set(hashes) != set(ARQUIVOS_2021):
         raise ValueError("Inventário deve conter os 12 meses de 2021 uma única vez.")

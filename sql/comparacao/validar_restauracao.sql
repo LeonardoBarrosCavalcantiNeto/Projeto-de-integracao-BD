@@ -1,4 +1,4 @@
--- Verificação do cluster restaurado de um backup físico já validado na origem.
+-- Verificação do banco restaurado a partir de um backup já validado na origem.
 DO $$
 BEGIN
  IF (SELECT array_agg(ano_origem ORDER BY ano_origem) FROM staging_elt.resumo_qualidade)
@@ -11,7 +11,9 @@ BEGIN
   LEFT JOIN (SELECT ano_origem,count(*) n FROM dw_elt.fato_voo GROUP BY 1) b USING(ano_origem)
   LEFT JOIN (SELECT ano_origem,count(*) n FROM raw_etl.ocorrencias GROUP BY 1) r USING(ano_origem)
   LEFT JOIN (SELECT ano_origem,count(*) n FROM raw.ocorrencias GROUP BY 1) s USING(ano_origem)
-  WHERE a.n IS DISTINCT FROM q.tratada OR b.n IS DISTINCT FROM q.tratada
+  -- Um ano só com rejeições ou descartes tem zero fatos e não aparece no GROUP BY.
+  WHERE coalesce(a.n, 0) IS DISTINCT FROM q.tratada
+     OR coalesce(b.n, 0) IS DISTINCT FROM q.tratada
      OR r.n IS DISTINCT FROM q.bruta OR s.n IS DISTINCT FROM q.bruta
  ) THEN RAISE EXCEPTION 'Contagens divergentes na restauração'; END IF;
 END $$;

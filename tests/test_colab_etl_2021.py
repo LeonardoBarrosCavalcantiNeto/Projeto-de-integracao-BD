@@ -59,6 +59,19 @@ class EntradaColab2021(unittest.TestCase):
         self.preparar()
         self.assertEqual({p.name for p in self.entrada.iterdir()}, set(colab.ARQUIVOS_2021))
 
+    def test_manifesto_json_seleciona_os_12_meses_de_2021(self):
+        self.criar_zip()
+        self.inventario = self.raiz / "manifesto_vra.json"
+        arquivos = [{"ano_origem": 2020, "arquivo_origem": "VRA_2020_01.csv", "sha256": "0" * 64}]
+        arquivos.extend(
+            {"ano_origem": 2021, "arquivo_origem": nome, "sha256": hashlib.sha256(conteudo).hexdigest()}
+            for nome, conteudo in self.conteudos.items()
+        )
+        self.inventario.write_text(json.dumps({"arquivos": arquivos}), encoding="utf-8")
+        resultado = self.preparar()
+        self.assertTrue(resultado["hashes_conferidos"])
+        self.assertEqual({item["arquivo"] for item in resultado["arquivos"]}, set(self.conteudos))
+
     def test_mes_ausente(self):
         self.criar_zip(omitir=colab.ARQUIVOS_2021[-1])
         with self.assertRaisesRegex(ValueError, "Meses ausentes"):

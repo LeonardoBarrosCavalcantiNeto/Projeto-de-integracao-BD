@@ -1,3 +1,5 @@
+-- Template para o bundle canônico com os schemas dw e staging.
+-- Para os dois DWs da entrega, execute sql/comparacao/analises_finais.sql.
 -- Ano de origem = ano do conjunto CSV; pode diferir da data operacional.
 SELECT ano_origem,count(*) voos FROM dw.fato_voo GROUP BY 1 ORDER BY 1;
 SELECT c.companhia_icao,c.companhia_nome,f.ano_origem,count(*) voos,

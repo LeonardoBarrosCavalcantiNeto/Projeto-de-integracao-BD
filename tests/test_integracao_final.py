@@ -153,6 +153,8 @@ class Final(unittest.TestCase):
             executar(manual,sql,base/'etl_manual.log')
             executar(manual,(ROOT/'sql/comparacao/validar_final.sql').read_text(encoding='utf-8'),base/'comparacao_manual.log')
             executar(manual,(ROOT/'sql/comparacao/validar_restauracao.sql').read_text(encoding='utf-8'),base/'restauracao.log')
+            for name in ('analises_finais', 'rastreabilidade'):
+                executar(manual,(ROOT/f'sql/comparacao/{name}.sql').read_text(encoding='utf-8'),base/f'{name}.log')
             with self.assertRaisesRegex(RuntimeError,r'etapa vra_tratada.*primeiro id_raw=1'):
                 executar(manual,"BEGIN; UPDATE staging_etl.vra_tratada SET numero_voo='9999' "
                          "WHERE ano_origem=2019 AND id_raw=1; SELECT comparacao.validar_ano(2019); ROLLBACK;",
@@ -160,5 +162,30 @@ class Final(unittest.TestCase):
             self.assertIn('v.atraso_partida_min',(base/'out/02_etl.psql').read_text(encoding='utf-8'))
             for year in [2019,2020,2021]:
                 self.assertIn(f'COMPARACAO_EXATA_OK {year}',(base/f'out/validacao_{year}.log').read_text(encoding='utf-8'))
+
+    @unittest.skipUnless(shutil.which('postgres') and shutil.which('initdb'),
+                         'PostgreSQL local indisponível')
+    def test_validar_restauracao_aceita_ano_sem_fatos(self):
+        with tempfile.TemporaryDirectory(prefix='anac_sem_fatos_') as tmp:
+            base = Path(tmp)
+            inputs, _ = self.preparar_fixture(base)
+            for arquivo in inputs[2020].glob('*.csv'):
+                with arquivo.open(encoding='utf-8-sig', newline='') as fonte:
+                    header, *rows = csv.reader(fonte, delimiter=';')
+                for row in rows:
+                    row[ORIGINAIS.index('Partida Prevista')] = ''
+                with arquivo.open('w', encoding='utf-8-sig', newline='') as destino:
+                    writer = csv.writer(destino, delimiter=';')
+                    writer.writerow(header)
+                    writer.writerows(rows)
+            with contextlib.redirect_stdout(io.StringIO()):
+                prepare(inputs, base/'out')
+                isolated(base/'out', base/'cluster')
+            summary = json.loads((base/'out/etl/2020/resumo.json').read_text(encoding='utf-8'))
+            self.assertGreater(summary['bruta'], 0)
+            self.assertEqual(summary['tratada'], 0)
+            log = base/'restauracao.log'
+            executar(base/'cluster', (ROOT/'sql/comparacao/validar_restauracao.sql').read_text(encoding='utf-8'), log)
+            self.assertIn('RESTAURACAO_OK', log.read_text(encoding='utf-8'))
 
 if __name__=='__main__':unittest.main()

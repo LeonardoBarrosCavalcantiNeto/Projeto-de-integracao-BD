@@ -172,7 +172,8 @@ def gerar_manual(output, raw, imports, transforms, consolidation, dw):
             body = 'BEGIN;\n'+body+'\nCOMMIT;'
         (folder/name).write_text(header+body+'\n',encoding='utf-8')
     save('01_raw.sql', raw)
-    guard = "DO $$ BEGIN IF EXISTS(SELECT FROM raw.voos_2019) OR EXISTS(SELECT FROM raw.voos_2020) THEN RAISE EXCEPTION 'RAW não vazia: importação repetida bloqueada'; END IF; END $$;"
+    raw_nao_vazia = ' OR '.join(f'EXISTS(SELECT FROM raw.voos_{year})' for year in sorted(transforms))
+    guard = f"DO $$ BEGIN IF {raw_nao_vazia} THEN RAISE EXCEPTION 'RAW não vazia: importação repetida bloqueada'; END IF; END $$;"
     save('02_importar_raw.psql', [guard]+imports)
     for step,year in enumerate(sorted(transforms),3):
         save(f'{"04b" if year==2021 else f"{step:02d}"}_transformar_{year}.sql',transforms[year])
