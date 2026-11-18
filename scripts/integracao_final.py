@@ -58,11 +58,22 @@ def export_csv(frame, path):
     write_csv_rows(frame.columns,frame.itertuples(index=False,name=None),path)
 
 
+def padronizar_ocorrencias(original, base):
+    """Fornece a rastreabilidade exigida pelo ETL sem alterar o retrato RAW."""
+    import pandas as pd
+    entrada = base.assign(
+        data_carga=pd.Timestamp.now(tz='UTC'),
+        pipeline='ETL',
+        versao_contrato='1.1',
+    )
+    return original.padronizar_textos(entrada)
+
+
 def exact_duplicate_stats(duplicates, original):
     groups=len(duplicates[['arquivo_preservado','linha_preservada']].drop_duplicates())
     invalid=0
     if len(duplicates):
-        normalized=original.padronizar_textos(duplicates)
+        normalized=padronizar_ocorrencias(original, duplicates)
         converted=original.converter_tipos(normalized)
         invalid=int(original.motivos_obrigatorios(normalized,converted).map(bool).sum())
     return dict(grupos_duplicados=groups,linhas_envolvidas_duplicatas=len(duplicates)+groups,
@@ -123,7 +134,7 @@ def etl(year, directory, output):
     duplicates=raw.loc[extra].merge(representatives,on=ORIGINAIS,validate='many_to_one')
     del representatives
     base=raw.loc[~extra]
-    text=original.padronizar_textos(base)
+    text=padronizar_ocorrencias(original, base)
     converted=original.converter_tipos(text)
     if year!=2021:
         # Os dois layouts de referência são extensão específica da fonte 2021.
@@ -134,6 +145,11 @@ def etl(year, directory, output):
     rejected=base.loc[invalid].copy()
     rejected['motivos_rejeicao']=reasons.loc[invalid].map(lambda v:'{'+','.join(v)+'}')
     anomalies=original.auditar_opcionais(base,text,converted)
+    # A auditoria individual inclui campos canônicos e retratos bruto__*.
+    # A integração exporta as seis colunas previstas no seu DDL, preservando
+    # o nome do campo e o valor originais para comparação com a auditoria SQL.
+    anomalies=anomalies[META[:3]+['campo_original','valor_original','motivo']].rename(
+        columns={'campo_original':'campo'})
     anomalies['motivo']=anomalies.motivo.str.replace('FORA_DE_2021',f'FORA_DE_{year}',regex=False)
     treated=original.calcular_metricas(converted.loc[~invalid])
     columns=original.colunas_canonicas+META+MEASURES
