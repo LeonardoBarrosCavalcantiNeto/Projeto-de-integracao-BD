@@ -1,0 +1,34 @@
+{
+  "recovery_wal_confirmado": true,
+  "cargas_reaproveitadas": true,
+  "cargas_dimensionais_reexecutadas_antes_da_interrupcao": true,
+  "ano_a_ano": [
+    {
+      "ano": 2019,
+      "raw": 983414,
+      "duplicatas_excedentes": 470,
+      "rejeicoes": 18,
+      "fato_por_dw": 982926,
+      "divergencias_de_conteudo": 0,
+      "rastreabilidade_verificada_nos_dois_fluxos": true
+    },
+    {
+      "ano": 2020,
+      "raw": 483545,
+      "duplicatas_excedentes": 124,
+      "rejeicoes": 1512,
+      "fato_por_dw": 481909,
+      "divergencias_de_conteudo": 0,
+      "rastreabilidade_verificada_nos_dois_fluxos": true
+    },
+    {
+      "ano": 2021,
+      "raw": 632148,
+      "duplicatas_excedentes": 0,
+      "rejeicoes": 25511,
+      "fato_por_dw": 606637,
+      "divergencias_de_conteudo": 0,
+      "rastreabilidade_verificada_nos_dois_fluxos": true
+    }
+  ]
+}

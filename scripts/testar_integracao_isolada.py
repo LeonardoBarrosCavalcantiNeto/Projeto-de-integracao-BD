@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Executa bundle no PostgreSQL local em modo single-user (sem sockets).
+
+Somente cluster novo de teste sob .local; não acessa o anac_dw do usuário.
+Erros SQL também são detectados no log: backend single-user pode retornar zero.
+"""
+import argparse
+import re
+import subprocess
+from pathlib import Path
+from integrar_anac import ROOT, literal
+
+
+def executar(cluster, sql, log):
+    # -j: termina comandos com ponto e vírgula + linha vazia. O batch inteiro
+    # é uma única entrada para preservar BEGIN/COMMIT e blocos PL/pgSQL.
+    sql = '\n'.join(line for line in sql.splitlines() if line.strip())+'\n\n'
+    with Path(log).open('w', encoding='utf-8') as output:
+        process = subprocess.run(['postgres','--single','-j','-D',str(cluster),
+                                  '-c','logging_collector=off','-c','work_mem=64MB','postgres'],
+                                 input=sql,encoding='utf-8',stdout=output,stderr=subprocess.STDOUT)
+    content=Path(log).read_text(encoding='utf-8')
+    if process.returncode or re.search(r'\b(?:ERROR|FATAL|PANIC):',content):
+        details='\n'.join(line for line in content.splitlines() if re.search(r'\b(?:ERROR|FATAL|PANIC|DETAIL|HINT):',line))
+        raise RuntimeError(f'Falha PostgreSQL (status do processo: {process.returncode}); consultar {log}\n{details}')
+
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--bundle',type=Path,default=ROOT/'.local/integracao/bundle')
+    parser.add_argument('--cluster',type=Path,default=ROOT/'.local/integracao/postgres_teste')
+    parser.add_argument('--manual',action='store_true',help='Executar cada etapa gerada para DataGrip separadamente')
+    args=parser.parse_args()
+    cluster=args.cluster.resolve(); bundle=args.bundle.resolve()
+    if cluster.exists():
+        raise ValueError('Cluster deve ser novo. Para consultas posteriores, usar executar().')
+    cluster.parent.mkdir(parents=True,exist_ok=True)
+    subprocess.run(['initdb','-D',str(cluster),'-A','trust','--no-locale','-E','UTF8'],check=True,capture_output=True)
+    if args.manual:
+        files=sorted((bundle/'manual').glob('*'))
+        if len(files)!=11:
+            raise ValueError('Execute prepare para gerar as 11 etapas manuais')
+        for file in files:
+            sql=file.read_text(encoding='utf-8')
+            sql=re.sub(r'^\\copy (.*)$',r'COPY \1;',sql,flags=re.M)
+            executar(cluster,sql,bundle/f'manual_{file.stem}.log')
+            print('Etapa manual validada:',file.name,flush=True)
+    else:
+        sql=(bundle/'carga.sql').read_text(encoding='utf-8')
+        sql=re.sub(r'^\\copy (.*)$',r'COPY \1;',sql,flags=re.M)
+        executar(cluster,sql,bundle/'postgres_carga.log')
+    rerun='BEGIN;\n'+(ROOT/'sql/integracao/03_carga_dw.sql').read_text(encoding='utf-8')+'\n'+(ROOT/'sql/integracao/04_validar.sql').read_text(encoding='utf-8')+'\nCOMMIT;'
+    executar(cluster,rerun,bundle/'postgres_reexecucao.log')
+    for name in ['05_analises']:
+        executar(cluster,(ROOT/f'sql/integracao/{name}.sql').read_text(encoding='utf-8'),bundle/(name+'.log'))
+    print(f'Integração e reexecução validadas em {cluster}. Logs em {bundle}')
+
+if __name__=='__main__':
+    main()

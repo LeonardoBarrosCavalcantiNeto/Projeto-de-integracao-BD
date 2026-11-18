@@ -1,0 +1,13 @@
+{
+  "arquivo_local": "backups/final_2019_2021_20261117_195714_156109.tar.gz",
+  "sha256": "5dc9dbf8a3ad096bd950697fcc03675e9f2e11c4df3d10018310815106ac659e",
+  "bytes": 1764723965,
+  "postgresql_major": "18",
+  "restauracao_validada": true,
+  "validacoes": [
+    "anos",
+    "contagens RAW e fato nos dois fluxos",
+    "sete dimensões",
+    "dez FKs por fato"
+  ]
+}
