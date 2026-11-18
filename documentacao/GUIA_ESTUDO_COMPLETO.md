@@ -124,7 +124,7 @@ A tabela é **histórica**, da execução com os CSVs reais. A validação recen
 ### Pontos que merecem cuidado na defesa
 
 - **A auditoria preserva a referência bruta.** Nos dois fluxos, uma referência válida de outro ano, como `01/01/2020 00:00:00` num CSV de 2021, fica como texto original na anomalia `REFERENCIA_FORA_DE_2021` e como `DATE '2020-01-01'` na fato. A regressão também cobre o formato ISO e o formato brasileiro sem horário, que é inválido pela regra adotada. [Decisão técnica](DECISOES_TECNICAS.md#auditoria-da-referência-fora-do-ano-em-2021) · [Teste integrado](../tests/test_integracao_final.py)
-- O ELT consolida seus indicadores de qualidade em `staging_elt.resumo_qualidade`. Os resumos do Pandas ficam nos JSONs anuais. As consultas de demonstração leem as estrelas diretamente. [Análises](../sql/comparacao/analises_finais.sql) · [Orquestração](../scripts/integracao_final.py)
+- O ELT consolida seus indicadores de qualidade em `staging_elt.resumo_qualidade`. Os resumos do Pandas ficam nos JSONs anuais. As consultas do relatório em `analysis/` leem as estrelas diretamente. [Análises](../README.md#análises-do-relatório) · [Orquestração](../scripts/integracao_final.py)
 - **Ambientes e definições.** Fedora e single-user foram testados. Serviço TCP, download oficial por HTTPS e execução em Windows/macOS têm os limites indicados no guia. O atraso positivo é a definição da consulta do projeto. Fuso e interpretação operacional de referência têm limites documentais. [Portabilidade](../relatorio/PORTABILIDADE.md) · [Contrato v1.1](Contrato_Tratamento_VRA_ANAC_2019_2021_ATUALIZADO.pdf)
 
 ## 5. Mapa dos arquivos

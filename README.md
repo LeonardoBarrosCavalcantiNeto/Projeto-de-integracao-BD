@@ -56,7 +56,7 @@ A comparação integral confere RAW, tratamento, descartes, anomalias, fatos, di
 psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/validar_final.sql
 ```
 
-Os comandos opcionais abaixo apresentam as análises dos dois DWs e rastreiam ocorrências de 2021 até o CSV de origem.
+As consultas complementares abaixo apresentam indicadores dos dois DWs e rastreiam ocorrências de 2021 até o CSV de origem.
 
 ```bash
 psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/analises_finais.sql
@@ -64,6 +64,20 @@ psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/rastreabilidade.sql
 ```
 
 O backup lógico e a validação de restauração são opcionais para a reprodução. O roteiro manual em cliente SQL e os notebooks dos integrantes também são opcionais. Para o ETL individual de 2021, use `dados/brutos/2021/` ou siga a preparação de ZIP no Colab hospedado. [Backup e restauração](documentacao/REPRODUCAO_MULTIPLATAFORMA.md#6-backup-lógico-e-restauração) · [Demonstração prática](documentacao/GUIA_DEMONSTRACAO_PRATICA.md) · [Notebook ETL 2021](notebooks/etl/etl_vra_anac_2021.ipynb) · [Evidências históricas](resultados/validacoes/integracao_final/)
+
+### Análises do relatório
+
+Com `dw_etl` e `dw_elt` carregados no mesmo banco, execute cada arquivo no DataGrip ou rode os comandos abaixo a partir da raiz. As linhas identificam o fluxo e o ano do CSV de origem. Compare os resultados por fluxo sem somar os dois DWs.
+
+```bash
+psql -X -v ON_ERROR_STOP=1 -f analysis/01_evolucao_voos.sql
+psql -X -v ON_ERROR_STOP=1 -f analysis/02_atrasos_partida.sql
+psql -X -v ON_ERROR_STOP=1 -f analysis/03_companhias_aeroportos.sql
+```
+
+- [Evolução dos voos](analysis/01_evolucao_voos.sql) conta as ocorrências válidas e calcula a variação percentual frente ao ano anterior. O primeiro ano do recorte fica sem base de comparação.
+- [Atrasos nas partidas](analysis/02_atrasos_partida.sql) mede contagens, percentual de atrasos positivos e média em minutos sobre as partidas calculáveis. A média inclui os zeros de antecipações e pontualidade.
+- [Companhias e aeroportos](analysis/03_companhias_aeroportos.sql) mostra as dez primeiras posições por ano e fluxo, com empates. O segundo resultado separa partidas registradas na origem e chegadas registradas no destino.
 
 ## Executar os testes
 
@@ -86,6 +100,7 @@ Para a seleção sem PostgreSQL, use `python -m unittest discover -s tests -p NO
 |---|---|
 | `scripts/` | Preparação, tratamento Pandas, execução e auditoria |
 | `sql/{transformacoes,database,integracao,comparacao}/` | Templates ELT, DDL dimensional, cargas, consultas e comparação |
+| `analysis/` | Consultas independentes para os três resultados do relatório |
 | `notebooks/` | Os notebooks ETL usam o ambiente de `requirements.txt` para execução local. Os notebooks ELT individuais usam o Colab hospedado. |
 | `tests/` | Testes de ingestão, geração SQL, integridade e equivalência |
 | `documentacao/`, `relatorio/` | Guias, modelo dimensional, decisões e resultados medidos |

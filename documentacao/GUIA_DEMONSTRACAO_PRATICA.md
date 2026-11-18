@@ -4,6 +4,8 @@ Use um **PostgreSQL já carregado** e ensaie em uma sessão com acesso de leitur
 
 O roteiro de apresentação é um material interno da equipe, destinado à preparação da exposição oral, e não faz parte da entrega pública do repositório.
 
+Os três resultados do relatório têm consultas próprias em `analysis/`. [Comandos das análises](../README.md#análises-do-relatório)
+
 ## Preparação
 
 1. No DataGrip, abra a fonte PostgreSQL da avaliação, confira host, porta, banco e usuário e use **Test Connection**. Selecione `raw`, `raw_etl`, `staging_etl`, `staging_elt`, `dw_etl` e `dw_elt` no navegador de objetos. Se a lista estiver desatualizada, sincronize a introspecção. Abra uma única sessão para os comandos e a transação.

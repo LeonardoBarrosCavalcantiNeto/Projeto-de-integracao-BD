@@ -119,7 +119,7 @@ psql -X -v ON_ERROR_STOP=1 -f sql/comparacao/validar_final.sql
 
 Se a conexão falhar, confira primeiro o serviço, a porta, os valores `PG*` e a autenticação da etapa anterior. Se `psql` informar que um arquivo de `\copy` não existe, confira se está usando o bundle preparado na máquina cliente e se o caminho continua acessível a quem executa `psql`. Se o erro indicar schema existente, confira o banco de destino e a situação da transação antes de repetir a carga.
 
-Cada carga faz uma transação própria. Se a carga ELT terminou e a ETL falhou, corrija a causa, confira se `dw_etl` está ausente e retome a partir de `02_etl.psql`. A comparação espera `DIMENSOES_E_FKS_OK` e `COMPARACAO_EXATA_OK` para 2019, 2020 e 2021. As consultas opcionais de apresentação ficam em `sql/comparacao/analises_finais.sql` e podem ser executadas no psql ou em um cliente gráfico.
+Cada carga faz uma transação própria. Se a carga ELT terminou e a ETL falhou, corrija a causa, confira se `dw_etl` está ausente e retome a partir de `02_etl.psql`. A comparação espera `DIMENSOES_E_FKS_OK` e `COMPARACAO_EXATA_OK` para 2019, 2020 e 2021. As consultas opcionais do relatório ficam em `analysis/` e podem ser executadas no psql ou em um cliente gráfico. [Comandos das análises](../README.md#análises-do-relatório)
 
 Em cada DW, as contagens esperadas são 982.926 fatos em 2019, 481.909 em 2020 e 606.637 em 2021, totalizando **2.071.472**. Em um banco já carregado, esta consulta confere os números sem reimportar dados.
 
